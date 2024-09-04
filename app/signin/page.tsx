@@ -150,7 +150,7 @@ export default function SignInPage() {
         opacity={0.9}
       >
         <Stack align={'center'}>
-          <Heading fontSize={'4xl'} color={'white'}>Login User</Heading>
+          <Heading fontSize={'4xl'} color={'white'}>Login</Heading>
         </Stack>
         <Box
           rounded={'lg'}
