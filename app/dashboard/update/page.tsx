@@ -15,23 +15,26 @@ import {
     useBreakpointValue,
     Tooltip,
     IconButton,
+    Alert,
+    AlertIcon,
+    AlertTitle,
+    AlertDescription,
     Input,
     InputGroup,
     InputLeftElement,
     Skeleton,
-    SkeletonText,
     Text,
 } from '@chakra-ui/react';
 import { DownloadIcon, SearchIcon } from '@chakra-ui/icons';
 import NextLink from 'next/link';
-import { fetchForms } from '@/services/api';
+import { fetchUpdates } from '@/services/api';
 import Pagination from '@/components/Pagination';
 
-// Define FormData type
-interface FormData {
+interface UpdateData {
     id: string;
     attributes: {
         Title: string;
+        Dated: string;
         File: {
             data: {
                 attributes: {
@@ -42,8 +45,8 @@ interface FormData {
     };
 }
 
-const FormPage = () => {
-    const [forms, setForms] = useState<FormData[]>([]);
+const UpdatePage = () => {
+    const [updates, setUpdates] = useState<UpdateData[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
     const [currentPage, setCurrentPage] = useState<number>(1);
@@ -51,40 +54,44 @@ const FormPage = () => {
     const [searchTerm, setSearchTerm] = useState<string>('');
     const [totalRecords, setTotalRecords] = useState<number>(0);
 
-    const itemsPerPage = 10; // Number of items per page
-
-    const bgcolor = useColorModeValue('white', 'gray.900');
+    const itemsPerPage = 10;
     const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+    const bgcolor = useColorModeValue('white', 'gray.900');
     const boxColor = useColorModeValue('gray.700', 'blue.900');
     const textColor = useColorModeValue('white', 'white');
     const tableVariant = useBreakpointValue({ base: 'striped', md: 'striped' });
 
     useEffect(() => {
-        const getForms = async () => {
+        const loadUpdates = async () => {
             try {
-                const data = await fetchForms();
-                const formsData = data.data || [];
-                setForms(formsData);
-                setTotalRecords(formsData.length);
-                setTotalPages(Math.ceil(formsData.length / itemsPerPage));
-            } catch (error) {
-                setError('Failed to load forms & application');
+                const data = await fetchUpdates();
+                const updatesData = data.data || [];
+                setUpdates(updatesData);
+                setTotalRecords(updatesData.length);
+                setTotalPages(Math.ceil(updatesData.length / itemsPerPage));
+            } catch (error: any) {
+                if (error?.response?.status === 401 && error?.response?.data?.message === 'Unauthorized') {
+                    setError('You are not authorized to view this page');
+                } else {
+                    console.error('Failed to fetch circulars:', error);
+                    setError('Failed to fetch circulars. Please try again later.');
+                }
             } finally {
                 setLoading(false);
             }
         };
 
-        getForms();
+        loadUpdates();
     }, []);
 
-    const filteredForms = useMemo(() => {
-        const filtered = forms.filter(form =>
-            form.attributes.Title.toLowerCase().includes(searchTerm.toLowerCase())
+    const filteredUpdates = useMemo(() => {
+        const filtered = updates.filter(update =>
+            update.attributes.Title.toLowerCase().includes(searchTerm.toLowerCase())
         );
         setTotalRecords(filtered.length);
         setTotalPages(Math.ceil(filtered.length / itemsPerPage));
         return filtered;
-    }, [searchTerm, forms]);
+    }, [searchTerm, updates]);
 
     // Function to handle download
     const handleDownload = useCallback((fileUrl?: string) => {
@@ -121,26 +128,25 @@ const FormPage = () => {
         }
     }, [baseUrl]);
 
-    if (error) return <Box color="red.500">{error}</Box>;
     return (
         <Box bg={bgcolor} p={4} rounded="md" shadow="md">
-            <Box
-                mb={4}
-                p={4}
-                bg={boxColor}
-                color={textColor}
-                borderRadius="sm"
-                textAlign="left"
-            >
-                <Text textTransform={'uppercase'}>
-                    Forms & Application
+            {error && (
+                <Alert status="error" mb={4}>
+                    <AlertIcon />
+                    <AlertTitle>Error</AlertTitle>
+                    <AlertDescription>{error}</AlertDescription>
+                </Alert>
+            )}
+            <Box mb={{ base: 4, md: 8 }} p={4} bg={boxColor} color={textColor} borderRadius="sm" textAlign="left">
+                <Text textTransform={'uppercase'} fontSize={{ base: 'sm', md: 'md' }}>
+                    Latest Updates
                 </Text>
             </Box>
-            <Box display="flex" justifyContent="flex-end" width="100%">
+            <Box display="flex" justifyContent="flex-end" width="100%" p={2}>
                 <Box
                     width={{
-                        base: '100%',  // Full width on small screens
-                        md: '40%'      // 40% width on medium and larger screens
+                        base: '100%',
+                        md: '40%',
                     }}
                 >
                     <InputGroup mb={4}>
@@ -148,20 +154,16 @@ const FormPage = () => {
                             <SearchIcon color="gray.300" />
                         </InputLeftElement>
                         <Input
-                            placeholder="Search Forms"
+                            placeholder="Search Circulars"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </InputGroup>
                 </Box>
             </Box>
-
             {loading ? (
                 <Box>
-                    {/* Skeleton for table headers */}
                     <Skeleton height="40px" mb={4} />
-
-                    {/* Skeleton for table rows */}
                     {Array(10)
                         .fill("")
                         .map((_, index) => (
@@ -174,21 +176,25 @@ const FormPage = () => {
                         <Thead>
                             <Tr>
                                 <Th p={2}>Serial No</Th>
-                                <Th p={2}>Title</Th>
+                                <Th p={2}>Description</Th>
+                                <Th p={2}>Updated on</Th>
                                 <Th p={2}>Action</Th>
                             </Tr>
                         </Thead>
                         <Tbody>
-                            {filteredForms
+                            {filteredUpdates
                                 .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
-                                .map((form, index) => (
-                                    <Tr key={form.id}>
+                                .map((circular, index) => (
+                                    <Tr key={circular.id}>
                                         <Td p={2}>{(currentPage - 1) * itemsPerPage + index + 1}</Td>
-                                        <Td p={2}>{form.attributes.Title}</Td>
+                                        <Td p={2}>{circular.attributes.Title}</Td>
+                                        <Td p={2}>
+                                            {new Date(circular.attributes.Dated).toLocaleDateString()}
+                                        </Td>
                                         <Td p={2}>
                                             <Tooltip label="Download" aria-label="Download">
                                                 <IconButton
-                                                    onClick={() => handleDownload(form.attributes.File?.data?.attributes?.url)}
+                                                    onClick={() => handleDownload(circular.attributes.File?.data?.attributes?.url)}
                                                     icon={<DownloadIcon />}
                                                     colorScheme="blue"
                                                     size="sm"
@@ -212,4 +218,4 @@ const FormPage = () => {
     );
 };
 
-export default FormPage;
+export default UpdatePage;

@@ -15,7 +15,7 @@ import {
 } from '@chakra-ui/react';
 import NextLink from 'next/link';
 import { useRouter } from 'next/navigation'; 
-import { fetchCirculars } from '@/services/api';
+import { fetchUpdates } from '@/services/api';
 
 // Marquee animation keyframes
 const marquee = keyframes`
@@ -24,11 +24,11 @@ const marquee = keyframes`
 `;
 
 // Define CircularData type
-interface CircularData {
+interface UpdateData {
   id: string;
   attributes: {
     Title: string;
-    CircularDt: string;
+    Dated: string;
     File: {
       data: {
         attributes: {
@@ -39,7 +39,7 @@ interface CircularData {
   };
 }
 
-// Function to check if the circular is recent (e.g., within the last 7 days)
+// Function to check if the Updates is recent (e.g., within the last 7 days)
 const isNew = (dateString: string) => {
   const date = new Date(dateString);
   const now = new Date();
@@ -48,7 +48,7 @@ const isNew = (dateString: string) => {
 }
 
 const NewsUpdates = () => {
-  const [circulars, setCirculars] = useState<CircularData[]>([]);
+  const [updates, setUpdates] = useState<UpdateData[]>([]);
   const [loading, setLoading] = useState(false); // Loading state
 
   const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || '';
@@ -57,32 +57,32 @@ const NewsUpdates = () => {
   const router = useRouter(); // Use Next.js router
 
   // Memoized version of getCirculars to avoid re-creating the function on every render
-  const getCirculars = useCallback(async () => {
+  const getUpdates = useCallback(async () => {
     try {
-      const response = await fetchCirculars();
+      const response = await fetchUpdates();
       let data = Array.isArray(response.data) ? response.data : []; // Ensure it's an array
 
-      // Sort the circulars by date in descending order and get the most recent 10
+      // Sort the Updates by date in descending order and get the most recent 10
       data = data
-        .sort((a: CircularData, b: CircularData) => new Date(b.attributes.CircularDt).getTime() - new Date(a.attributes.CircularDt).getTime())
+        .sort((a: UpdateData, b: UpdateData) => new Date(b.attributes.Dated).getTime() - new Date(a.attributes.Dated).getTime())
         .slice(0, 10);
 
-      setCirculars(data);
+      setUpdates(data);
     } catch (error) {
-      console.error('Error fetching circulars:', error);
+      console.error('Error fetching Updates:', error);
     }
   }, []);
 
   useEffect(() => {
-    getCirculars();
-  }, [getCirculars]);
+    getUpdates();
+  }, [getUpdates]);
 
   // Memoize the rendered circulars to prevent re-renders
-  const renderedCirculars = useMemo(() => {
-    return Array.isArray(circulars) && circulars.length > 0 ? (
-      circulars.map((circular) => (
+  const renderedUpdates = useMemo(() => {
+    return Array.isArray(updates) && updates.length > 0 ? (
+      updates.map((update) => (
         <Box
-          key={circular.id}
+          key={update.id}
           py={2}
           display="flex"
           alignItems="center"
@@ -91,15 +91,15 @@ const NewsUpdates = () => {
         >
           <ChakraLink
             as={NextLink}
-            href={`${baseUrl}${circular.attributes.File?.data?.attributes?.url || '#'}`}
+            href={`${baseUrl}${update.attributes.File?.data?.attributes?.url || '#'}`}
             isExternal
             download
             color={textcolor}
             _hover={{ textDecoration: 'underline' }}
           >
-            {circular.attributes.Title}
+            {update.attributes.Title}
           </ChakraLink>
-          {isNew(circular.attributes.CircularDt) && (
+          {isNew(update.attributes.Dated) && (
             <Badge ml={2} colorScheme="green">
               New
             </Badge>
@@ -107,25 +107,25 @@ const NewsUpdates = () => {
         </Box>
       ))
     ) : (
-      <Box>No circulars available.</Box>
+      <Box>No Latest update available.</Box>
     );
-  }, [circulars, baseUrl, textcolor]);
+  }, [updates, baseUrl, textcolor]);
 
   const handleSeeAllClick = () => {
     setLoading(true); // Set loading state to true
-    router.push('/dashboard/circular'); // Navigate to the circular page
+    router.push('/dashboard/update'); // Navigate to the Updates page
   };
 
   return (
     <Box bg={bgcolor} p={4} rounded="md" shadow="md">
       <Flex justifyContent="space-between" alignItems="center" mb={4}>
         <chakra.h3 fontSize="md" fontWeight="bold">
-          News/Updates
+          Latest Updates
         </chakra.h3>
         {loading ? ( // Display spinner if loading
           <Spinner size="sm" />
         ) : (
-          <Button size="sm" colorScheme="blue" onClick={handleSeeAllClick}>
+          <Button size="sm" variant="ghost" colorScheme="blue" onClick={handleSeeAllClick}>
             See All
           </Button>
         )}
@@ -134,9 +134,9 @@ const NewsUpdates = () => {
       <Box overflow="hidden" position="relative" minH="200px">
         <Flex
           direction="column"
-          animation={`${marquee} 15s linear infinite`}
+          animation={`${marquee} 5s linear infinite`}
         >
-          {renderedCirculars}
+          {renderedUpdates}
         </Flex>
       </Box>
     </Box>

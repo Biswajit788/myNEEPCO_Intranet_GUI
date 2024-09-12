@@ -92,7 +92,7 @@ interface SidebarProps extends BoxProps {
 const LinkItems: Array<LinkItemProps> = [
   { name: 'My Dashboard', icon: AiOutlineDashboard, href: '/dashboard' },
   { name: 'HR', icon: FiTrendingUp, href: '#' },
-  { name: 'Reports', icon: AiOutlineFileDone, href: '#' },
+  { name: 'Generation Report', icon: AiOutlineFileDone, href: '#' },
   { name: 'Rules', icon: AiOutlineSchedule, href: '#' },
   { name: 'ISO', icon: AiOutlineAreaChart, href: '#' },
   { name: 'Downloads', icon: AiOutlineDownload, href: '#' },
@@ -114,6 +114,7 @@ const SidebarContent = ({ onClose, ...rest }: SidebarProps) => {
     <Box
       transition="3s ease"
       bg={useColorModeValue('gray.100', 'gray.900')}
+      borderRightWidth="2px"
       borderRightColor={useColorModeValue('gray.200', 'gray.700')}
       w={{ base: 'full', md: 60 }}
       pos="fixed"
@@ -149,7 +150,7 @@ const SidebarContent = ({ onClose, ...rest }: SidebarProps) => {
       )}
       <Divider />
       <Box
-        mt={4}
+        mt={2}
         py={0}
         px={0}
         overflowY="auto"
@@ -196,12 +197,10 @@ const SidebarContent = ({ onClose, ...rest }: SidebarProps) => {
                   { name: 'Transfer & Posting', href: '/dashboard/hr/transfer', icon: AiOutlineContainer },
                   { name: 'Vigilance Clearance', href: '/dashboard/hr/vigilance', icon: AiOutlineContainer },
                 ]
-                : link.name === 'Reports'
+                : link.name === 'Generation Report'
                   ? [
                     { name: 'Daily Report', href: '/dashboard/report/daily', icon: AiOutlineContainer },
-                    { name: 'Weekly Report', href: '/dashboard/report/weekly', icon: AiOutlineContainer },
                     { name: 'Monthly Report', href: '/dashboard/report/monthly', icon: AiOutlineContainer },
-                    { name: 'Quarterly Report', href: '/dashboard/report/quarterly', icon: AiOutlineContainer },
                     { name: 'Annual Report', href: '/dashboard/report/annual', icon: AiOutlineContainer },
                   ]
                   : link.name === 'Rules'
@@ -258,7 +257,6 @@ const NavItem = ({
         <Flex
           align="center"
           p="4"
-          mx="2"
           role="group"
           cursor="pointer"
           onClick={handleClick}
@@ -290,8 +288,8 @@ const NavItem = ({
         >
           {icon && (
             <Icon
-              mr="4"
-              fontSize="16" // Set font size smaller
+              mr="3"
+              fontSize="18" // Set Icon size
               _groupHover={{
                 color: activeColor,
               }}
@@ -312,7 +310,7 @@ const NavItem = ({
       </Link>
       <Collapse in={isOpen} animateOpacity>
         {subItems && (
-          <Box pl="8" mt="2" display="flex" flexDirection="column">
+          <Box pl="6" mt="2" display="flex" flexDirection="column">
             {subItems.map((item) => {
               const isSubItemActive = pathname === item.href;
               return (

@@ -125,7 +125,7 @@ const Circular = () => {
         {loading ? ( // Display spinner if loading
           <Spinner size="sm" />
         ) : (
-          <Button size="sm" colorScheme="blue" onClick={handleSeeAllClick}>
+          <Button size="sm" variant="ghost" colorScheme="blue" onClick={handleSeeAllClick}>
             See All
           </Button>
         )}

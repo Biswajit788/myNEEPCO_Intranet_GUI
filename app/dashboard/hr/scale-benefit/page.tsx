@@ -25,6 +25,7 @@ import { fetchScaleBenefit } from '@/services/api';
 import { DownloadIcon } from '@chakra-ui/icons';
 import Pagination from '@/components/Pagination';
 import NoDataDisplay from '@/components/NoDataDisplay';
+import Filter from '@/components/Filter';
 
 interface FileData {
     url: string;
@@ -57,10 +58,16 @@ const LOADING_TIME_MS = 0; // Time in milliseconds for skeleton display
 const MemoizedPagination = React.memo(Pagination);
 
 export default function ScaleBenefitPage() {
+
+    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || '';
     const [scaleBenefitData, setScaleBenefitdata] = useState<ScaleBenefit[]>([]);
     const [currentPage, setCurrentPage] = useState(1);
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
+    const [searchText, setSearchText] = useState('');
+    const [orderNo, setOrderNo] = useState<string | null>(null);
+    const [orderDt, setOrderDt] = useState<string | null>(null);
+    const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
     const bgColor = useColorModeValue('white', 'gray.900');
     const boxColor = useColorModeValue('gray.700', 'blue.900');
@@ -91,22 +98,86 @@ export default function ScaleBenefitPage() {
         getScaleBenefits();
     }, []);
 
-    // Memoize paginated data to avoid recalculating on each render
+    // Memoized filtered and sorted data
+    const filteredData = useMemo(() => {
+        let data = [...scaleBenefitData];
+
+        if (searchText) {
+            data = data.filter((scaleBenefit) => {
+                const orderNo = String(scaleBenefit.attributes.OrderNo).toLowerCase();
+                const description = String(scaleBenefit.attributes.Description).toLowerCase();
+                const grade = String(scaleBenefit.attributes.Grade).toLowerCase();
+
+                return (
+                    orderNo.includes(searchText.toLowerCase()) ||
+                    description.includes(searchText.toLowerCase()) ||
+                    grade.includes(searchText.toLowerCase())
+                );
+            });
+        }
+
+        // Apply filter by order number and date
+        if (orderNo) {
+            data = data.filter((scaleBenefit) =>
+                String(scaleBenefit.attributes.OrderNo).includes(orderNo)
+            );
+        }
+
+        if (orderDt) {
+            data = data.filter((scaleBenefit) => scaleBenefit.attributes.OrderDt === orderDt);
+        }
+
+        // Apply sorting by date
+        data.sort((a, b) => {
+            const dateA = new Date(a.attributes.OrderDt).getTime();
+            const dateB = new Date(b.attributes.OrderDt).getTime();
+
+            return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
+        });
+
+        return data;
+    }, [scaleBenefitData, searchText, orderNo, orderDt, sortOrder]);
+
     const paginatedData = useMemo(() => {
-        return scaleBenefitData.slice(
+        return filteredData.slice(
             (currentPage - 1) * ITEMS_PER_PAGE,
             currentPage * ITEMS_PER_PAGE
         );
-    }, [scaleBenefitData, currentPage]);
+    }, [filteredData, currentPage]);
 
-    // Memoize the handlePageChange function to avoid re-creation on each render
+    const handleSearch = useCallback((searchText: string) => {
+        setSearchText(searchText);
+        setCurrentPage(1);
+    }, []);
+
+    const handleFilter = useCallback((orderNo: string, orderDt: string) => {
+        setOrderNo(orderNo);
+        setOrderDt(orderDt);
+        setCurrentPage(1);
+    }, []);
+
+    const handleReset = useCallback(() => {
+        setSearchText('');
+        setOrderNo(null);
+        setOrderDt(null);
+        setCurrentPage(1);
+    }, []);
+
     const handlePageChange = useCallback((page: number) => {
         setCurrentPage(page);
     }, []);
 
     const totalPages = useMemo(() => {
-        return Math.ceil(scaleBenefitData.length / ITEMS_PER_PAGE);
-    }, [scaleBenefitData]);
+        return Math.ceil(filteredData.length / ITEMS_PER_PAGE);
+    }, [filteredData]);
+
+     // Total number of filtered records
+     const totalRecords = filteredData.length;
+
+    const handleSorting = useCallback((sortOrder: 'asc' | 'desc') => {
+        setSortOrder(sortOrder);
+        setCurrentPage(1);
+    }, []);
 
     const handleDownload = useCallback((fileUrl?: string) => {
         if (!fileUrl) {
@@ -115,7 +186,7 @@ export default function ScaleBenefitPage() {
             return;
         }
 
-        const fullUrl = `http://10.3.0.57:1337${fileUrl}`;
+        const fullUrl = `${baseUrl}${fileUrl}`;
         const newWindow = window.open('', '_blank', 'width=800,height=600');
 
         if (newWindow) {
@@ -140,7 +211,7 @@ export default function ScaleBenefitPage() {
             console.error('Failed to open new window');
             setError('Failed to open new window.');
         }
-    }, []);
+    }, [baseUrl]);
 
     const formatDateTime = useCallback((dateString?: string) => {
         if (!dateString) return 'Invalid date';
@@ -183,6 +254,13 @@ export default function ScaleBenefitPage() {
                 <Text textTransform={'uppercase'}>Release of Pay Scale Benefit Order</Text>
             </Box>
 
+            {/* Filter Component */}
+            <Filter
+                onSearch={handleSearch}
+                onFilter={handleFilter}
+                onSortByDate={handleSorting}
+            />
+
             {loading ? (
                 <SimpleGrid columns={{ base: 1, md: 1, lg: 3 }} spacing={4}>
                     {[...Array(ITEMS_PER_PAGE)].map((_, index) => (
@@ -214,6 +292,10 @@ export default function ScaleBenefitPage() {
                         </Card>
                     ))}
                 </SimpleGrid>
+            ) : filteredData.length === 0 ? (
+                <Flex direction="column" align="center" justify="center" minH="50vh">
+                    <NoDataDisplay />
+                </Flex>
             ) : scaleBenefitData.length === 0 ? (
                 <Flex
                     direction="column"
@@ -263,7 +345,7 @@ export default function ScaleBenefitPage() {
                                         <Text ml={2}>{attributes.Grade}</Text>
                                     </Flex>
                                 </CardBody>
-                                <Divider/>
+                                <Divider />
                                 <CardFooter py={2} px={3} display="flex" alignItems="center" justifyContent="space-between">
                                     {fileUrl && (
                                         <Tooltip label="Download" fontSize="xs">
@@ -289,6 +371,7 @@ export default function ScaleBenefitPage() {
             <MemoizedPagination
                 currentPage={currentPage}
                 totalPages={totalPages}
+                totalRecords={totalRecords}
                 onPageChange={handlePageChange}
             />
         </Box>

@@ -50,6 +50,13 @@ export const fetchCirculars = async () => {
   return response.data;
 };
 
+export const fetchUpdates = async () => {
+  const response = await axios.get(`${API_URL}/api/updates?populate=File&sort=id:desc`, {
+    headers: getHeaders(),
+  });
+  return response.data;
+};
+
 export const fetchVigilance = async () => {
   const response = await axios.get(`${API_URL}/api/vigilances?populate[File1][populate]=*&populate[File2][populate]=*&sort=id:desc`, {
     headers: getHeaders(),
@@ -83,4 +90,43 @@ export const fetchForms = async () => {
     headers: getHeaders(),
   });
   return response.data;
+};
+
+export const fetchDailyGenerationReport = async (date: string) => {
+  try {
+    const response = await axios.get(`${API_URL}/api/daily-generations`, {
+      params: { date },
+      headers: getHeaders(),
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching data:', error);
+    throw error;
+  }
+};
+
+export const fetchMonthlyGenerationReport = async (month: string, year: string) => {
+  try {
+    const response = await axios.get(`${API_URL}/api/monthly-generations`, {
+      params: { month, year }, 
+      headers: getHeaders(),
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching data:', error);
+    throw error;
+  }
+};
+
+export const fetchAnnualGenerationReport = async (year: string) => {
+  try {
+    const response = await axios.get(`${API_URL}/api/annual-generations`, {
+      params: { year },
+      headers: getHeaders(),
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching data:', error);
+    throw error;
+  }
 };

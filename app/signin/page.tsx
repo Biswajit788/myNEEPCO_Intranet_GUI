@@ -33,7 +33,7 @@ const SignInSchema = Yup.object().shape({
     .integer('Must be an integer')
     .min(1000, 'Must be at least 4-digit')
     .max(9999, 'Must be at most 4-digit')
-    .required('Ecode is required'),
+    .required('Employee code is required'),
   password: Yup.string()
     .required('Password is required'),
 });
@@ -167,7 +167,7 @@ export default function SignInPage() {
                 <Stack spacing={4}>
                   <FormControl id="ecode" isInvalid={!!errors.ecode && touched.ecode}>
                     <FormLabel>Employee Code</FormLabel>
-                    <Field as={Input} type="text" name="ecode" autoFocus />
+                    <Field as={Input} type="text" name="ecode" placeholder="xxxx" autoFocus />
                     <FormErrorMessage>{errors.ecode}</FormErrorMessage>
                   </FormControl>
                   <FormControl id="password" isInvalid={!!errors.password && touched.password}>

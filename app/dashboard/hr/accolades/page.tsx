@@ -50,6 +50,8 @@ interface Promotion {
 const ITEMS_PER_PAGE = 5;
 
 export default function PromotionPage() {
+
+  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || '';
   const [loading, setLoading] = useState(false);
   const [promotionData, setPromotionData] = useState<Promotion[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -96,7 +98,7 @@ export default function PromotionPage() {
       return;
     }
 
-    const fullUrl = `http://10.3.0.57:1337${fileUrl}`;
+    const fullUrl = `${baseUrl}${fileUrl}`;
 
     const newWindow = window.open('', '_blank', 'width=600,height=400');
 

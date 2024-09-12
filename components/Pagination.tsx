@@ -5,83 +5,63 @@ import { ChevronLeftIcon, ChevronRightIcon, ArrowLeftIcon, ArrowRightIcon } from
 interface PaginationProps {
   currentPage: number;
   totalPages: number;
+  totalRecords: number;
   onPageChange: (page: number) => void;
 }
 
-const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages, onPageChange }) => {
-  const pagesToShow = [];
-
-  if (totalPages <= 6) {
-    for (let i = 1; i <= totalPages; i++) {
-      pagesToShow.push(i);
-    }
-  } else {
-    if (currentPage <= 3) {
-      pagesToShow.push(1, 2, 3, 4, '...', totalPages);
-    } else if (currentPage > totalPages - 3) {
-      pagesToShow.push(1, '...', totalPages - 3, totalPages - 2, totalPages - 1, totalPages);
-    } else {
-      pagesToShow.push(1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages);
-    }
-  }
-
+const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages, totalRecords, onPageChange }) => {
   return (
-    <HStack spacing={2} justify="center" mt={8}>
-      <IconButton
-        icon={<ArrowLeftIcon />}
-        onClick={() => onPageChange(1)}
-        isDisabled={currentPage === 1}
-        aria-label="First Page"
-        size="sm"
-        variant="outline"
-      />
+    <HStack spacing={4} justify="space-between" mt={8}>
+      {/* Left side showing total number of records */}
+      <Text fontSize="sm" color="gray.700" fontStyle={'italic'} fontWeight={'bold'}>
+        Total Records: {totalRecords}
+      </Text>
 
-      <Button
-        size="sm"
-        onClick={() => onPageChange(currentPage - 1)}
-        isDisabled={currentPage === 1}
-        leftIcon={<ChevronLeftIcon />}
-        variant="outline"
-      >
-        Previous
-      </Button>
+      {/* Pagination controls */}
+      <HStack spacing={2} alignItems="center">
+        {/* First Page Button */}
+        <IconButton
+          icon={<ArrowLeftIcon />}
+          onClick={() => onPageChange(1)}
+          isDisabled={currentPage === 1}
+          aria-label="First Page"
+          size="sm"
+          variant="outline"
+        />
 
-      {pagesToShow.map((page, index) =>
-        typeof page === 'number' ? (
-          <Button
-            key={index}
-            size="sm"
-            onClick={() => onPageChange(page)}
-            colorScheme={page === currentPage ? 'blue' : undefined}
-            variant={page === currentPage ? 'solid' : 'outline'}
-          >
-            {page}
-          </Button>
-        ) : (
-          <Text key={index} as="span" px={2}>
-            {page}
-          </Text>
-        )
-      )}
+        {/* Previous Page Button */}
+        <Button
+          size="sm"
+          onClick={() => onPageChange(currentPage - 1)}
+          isDisabled={currentPage === 1}
+          leftIcon={<ChevronLeftIcon/>}
+          variant="outline"
+        />
 
-      <Button
-        size="sm"
-        onClick={() => onPageChange(currentPage + 1)}
-        isDisabled={currentPage === totalPages}
-        rightIcon={<ChevronRightIcon />}
-        variant="outline"
-      >
-        Next
-      </Button>
+        {/* Current Page / Total Pages */}
+        <Text fontSize="sm">
+          Page {currentPage} / {totalPages}
+        </Text>
 
-      <IconButton
-        icon={<ArrowRightIcon />}
-        onClick={() => onPageChange(totalPages)}
-        isDisabled={currentPage === totalPages}
-        aria-label="Last Page"
-        size="sm"
-        variant="outline"
-      />
+        {/* Next Page Button */}
+        <Button
+          size="sm"
+          onClick={() => onPageChange(currentPage + 1)}
+          isDisabled={currentPage === totalPages}
+          rightIcon={<ChevronRightIcon />}
+          variant="outline"
+        />
+
+        {/* Last Page Button */}
+        <IconButton
+          icon={<ArrowRightIcon />}
+          onClick={() => onPageChange(totalPages)}
+          isDisabled={currentPage === totalPages}
+          aria-label="Last Page"
+          size="sm"
+          variant="outline"
+        />
+      </HStack>
     </HStack>
   );
 };

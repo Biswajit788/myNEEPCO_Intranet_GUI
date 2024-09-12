@@ -1,9 +1,7 @@
-'use client'
-
-import React, { useEffect, useState } from 'react';
+"use client"
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import {
     Box,
-    chakra,
     Table,
     Thead,
     Tbody,
@@ -23,12 +21,11 @@ import {
     InputGroup,
     InputLeftElement,
     Skeleton,
-    Divider,
+    Text,
 } from '@chakra-ui/react';
 import { DownloadIcon, SearchIcon } from '@chakra-ui/icons';
-import NextLink from 'next/link';
-import { fetchCirculars } from '@/services/api';
 import Pagination from '@/components/Pagination';
+import { fetchCirculars } from '@/services/api';
 
 interface CircularData {
     id: string;
@@ -47,15 +44,18 @@ interface CircularData {
 
 const CircularPage = () => {
     const [circulars, setCirculars] = useState<CircularData[]>([]);
-    const [filteredCirculars, setFilteredCirculars] = useState<CircularData[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
     const [currentPage, setCurrentPage] = useState<number>(1);
     const [totalPages, setTotalPages] = useState<number>(1);
     const [searchTerm, setSearchTerm] = useState<string>('');
+    const [totalRecords, setTotalRecords] = useState<number>(0);
 
     const itemsPerPage = 10;
+    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || '';
     const bgcolor = useColorModeValue('white', 'gray.900');
+    const boxColor = useColorModeValue('gray.700', 'blue.900');
+    const textColor = useColorModeValue('white', 'white');
     const tableVariant = useBreakpointValue({ base: 'striped', md: 'striped' });
 
     useEffect(() => {
@@ -64,7 +64,7 @@ const CircularPage = () => {
                 const data = await fetchCirculars();
                 const circularsData = data.data || [];
                 setCirculars(circularsData);
-                setFilteredCirculars(circularsData);
+                setTotalRecords(circularsData.length); // Set the total records
                 setTotalPages(Math.ceil(circularsData.length / itemsPerPage));
             } catch (error: any) {
                 if (error?.response?.status === 401 && error?.response?.data?.message === 'Unauthorized') {
@@ -81,14 +81,50 @@ const CircularPage = () => {
         loadCirculars();
     }, []);
 
-    useEffect(() => {
+    // Memoize filtered data
+    const filteredCirculars = useMemo(() => {
         const filtered = circulars.filter(circular =>
             circular.attributes.Title.toLowerCase().includes(searchTerm.toLowerCase())
         );
-        setFilteredCirculars(filtered);
+        setTotalRecords(filtered.length);
         setTotalPages(Math.ceil(filtered.length / itemsPerPage));
-        setCurrentPage(1);
+        return filtered;
     }, [searchTerm, circulars]);
+
+    // Function to handle download
+    const handleDownload = useCallback((fileUrl?: string) => {
+        if (!fileUrl) {
+            console.error('File URL is not defined');
+            setError('File URL is not defined.');
+            return;
+        }
+
+        const fullUrl = `${baseUrl}${fileUrl}`;
+        const newWindow = window.open('', '_blank', 'width=600,height=500');
+
+        if (newWindow) {
+            newWindow.document.write(`
+                <html>
+                    <head>
+                        <title>Downloading...</title>
+                    </head>
+                    <body>
+                        <p>Your download should start automatically. If it does not, <a href="${fullUrl}" download>click here</a>.</p>
+                        <script>
+                            window.onload = function() {
+                                window.location.href = "${fullUrl}";
+                            };
+                        </script>
+                    </body>
+                </html>
+            `);
+
+            newWindow.document.close();
+        } else {
+            console.error('Failed to open new window');
+            setError('Failed to open new window.');
+        }
+    }, [baseUrl]);
 
     return (
         <Box bg={bgcolor} p={4} rounded="md" shadow="md">
@@ -99,17 +135,13 @@ const CircularPage = () => {
                     <AlertDescription>{error}</AlertDescription>
                 </Alert>
             )}
-            <chakra.h2 fontSize="lg" textTransform="uppercase" mb={4}>
-                All Circulars/Notices
-            </chakra.h2>
-            <Divider />
+            <Box mb={{ base: 4, md: 8 }} p={4} bg={boxColor} color={textColor} borderRadius="sm" textAlign="left">
+                <Text textTransform={'uppercase'} fontSize={{ base: 'sm', md: 'md' }}>
+                    All Circular/Notice
+                </Text>
+            </Box>
             <Box display="flex" justifyContent="flex-end" width="100%" p={2}>
-                <Box
-                    width={{
-                        base: '100%',
-                        md: '40%',
-                    }}
-                >
+                <Box width={{ base: '100%', md: '40%' }}>
                     <InputGroup mb={4}>
                         <InputLeftElement pointerEvents="none">
                             <SearchIcon color="gray.300" />
@@ -133,7 +165,7 @@ const CircularPage = () => {
                 </Box>
             ) : (
                 <TableContainer>
-                    <Table variant={tableVariant} size="sm">
+                    <Table variant={tableVariant} size="sm" borderWidth="1px">
                         <Thead>
                             <Tr>
                                 <Th p={2}>Serial No</Th>
@@ -149,22 +181,21 @@ const CircularPage = () => {
                                     <Tr key={circular.id}>
                                         <Td p={2}>{(currentPage - 1) * itemsPerPage + index + 1}</Td>
                                         <Td p={2}>{circular.attributes.Title}</Td>
+                                        <Td p={2}>{new Date(circular.attributes.CircularDt).toLocaleDateString()}</Td>
                                         <Td p={2}>
-                                            {new Date(circular.attributes.CircularDt).toLocaleDateString()}
-                                        </Td>
-                                        <Td p={2}>
-                                            <Tooltip label="Download" aria-label="Download">
-                                                <IconButton
-                                                    as={NextLink}
-                                                    href={`${circular.attributes.File?.data?.attributes?.url || '#'}`}
-                                                    target="_blank"
-                                                    download
-                                                    icon={<DownloadIcon />}
-                                                    colorScheme="blue"
-                                                    size="sm"
-                                                    aria-label="Download Circular"
-                                                />
-                                            </Tooltip>
+                                            {circular.attributes.File?.data?.attributes?.url ? (
+                                                <Tooltip label="Download" aria-label="Download">
+                                                    <IconButton
+                                                        onClick={() => handleDownload(circular.attributes.File?.data?.attributes?.url)}
+                                                        icon={<DownloadIcon />}
+                                                        colorScheme="blue"
+                                                        size="sm"
+                                                        aria-label="Download Circular"
+                                                    />
+                                                </Tooltip>
+                                            ) : (
+                                                'No File Available'
+                                            )}
                                         </Td>
                                     </Tr>
                                 ))}
@@ -174,6 +205,7 @@ const CircularPage = () => {
             )}
             <Pagination
                 currentPage={currentPage}
+                totalRecords={totalRecords}
                 totalPages={totalPages}
                 onPageChange={setCurrentPage}
             />
