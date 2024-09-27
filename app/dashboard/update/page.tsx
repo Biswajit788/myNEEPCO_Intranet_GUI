@@ -43,6 +43,7 @@ interface UpdateData {
             };
         };
     };
+    createdAt: string;
 }
 
 const UpdatePage = () => {
@@ -53,6 +54,7 @@ const UpdatePage = () => {
     const [totalPages, setTotalPages] = useState<number>(1);
     const [searchTerm, setSearchTerm] = useState<string>('');
     const [totalRecords, setTotalRecords] = useState<number>(0);
+    const [lastUpdated, setLastUpdated] = useState<string | null>(null);
 
     const itemsPerPage = 10;
     const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || '';
@@ -69,6 +71,12 @@ const UpdatePage = () => {
                 setUpdates(updatesData);
                 setTotalRecords(updatesData.length);
                 setTotalPages(Math.ceil(updatesData.length / itemsPerPage));
+
+                // Get the most recent createdAt date for last updated display
+                if (updatesData.length > 0) {
+                    const lastUpdatedDate = updatesData[0]?.attributes?.createdAt;
+                    setLastUpdated(lastUpdatedDate);
+                }
             } catch (error: any) {
                 if (error?.response?.status === 401 && error?.response?.data?.message === 'Unauthorized') {
                     setError('You are not authorized to view this page');
@@ -142,7 +150,7 @@ const UpdatePage = () => {
                     Latest Updates
                 </Text>
             </Box>
-            <Box display="flex" justifyContent="flex-end" width="100%" p={2}>
+            <Box display="flex" justifyContent="flex-start" width="100%" p={2}>
                 <Box
                     width={{
                         base: '100%',
@@ -160,6 +168,14 @@ const UpdatePage = () => {
                         />
                     </InputGroup>
                 </Box>
+            </Box>
+            {/* Display Last Updated Date */}
+            <Box textAlign="right" fontSize="sm" fontStyle={'italic'} mb={2}>
+                {lastUpdated && (
+                    <Text color="gray.400">
+                        Last Updated On: &nbsp;{new Date(lastUpdated).toLocaleDateString()}
+                    </Text>
+                )}
             </Box>
             {loading ? (
                 <Box>
@@ -187,7 +203,16 @@ const UpdatePage = () => {
                                 .map((circular, index) => (
                                     <Tr key={circular.id}>
                                         <Td p={2}>{(currentPage - 1) * itemsPerPage + index + 1}</Td>
-                                        <Td p={2}>{circular.attributes.Title}</Td>
+                                        <Td
+                                            p={2}
+                                            style={{
+                                                whiteSpace: 'normal',
+                                                wordWrap: 'break-word',
+                                                overflowWrap: 'break-word',
+                                            }}
+                                        >
+                                            {circular.attributes.Title}
+                                        </Td>
                                         <Td p={2}>
                                             {new Date(circular.attributes.Dated).toLocaleDateString()}
                                         </Td>

@@ -35,6 +35,7 @@ const MONTHS = [
 
 const MonthlyGenerationReport = () => {
   const toast = useToast();
+  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || '';
   const [month, setMonth] = useState<string>(getCurrentMonth());
   const [year, setYear] = useState<string>(String(getCurrentYear()));
   const [data, setData] = useState<ReportData[] | null>(null);
@@ -72,11 +73,36 @@ const MonthlyGenerationReport = () => {
     }
   };
 
-  const downloadFile = (fileUrl: string, fileName: string) => {
-    const link = document.createElement('a');
-    link.href = fileUrl;
-    link.download = fileName;
-    link.click();
+  const downloadFile = async (fileUrl: string, fileName: string) => {
+    const fullUrl = `${baseUrl}${fileUrl}`;
+
+    try {
+      // Fetch the file as a blob
+      const response = await fetch(fullUrl);
+      const blob = await response.blob();
+
+      // Create a Blob URL for the file
+      const blobUrl = URL.createObjectURL(blob);
+
+      // Create an invisible link element
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.setAttribute('download', fileName);
+
+      // Append the link to the DOM
+      document.body.appendChild(link);
+
+      // Programmatically trigger a click to download the file
+      link.click();
+
+      // Clean up and remove the link
+      document.body.removeChild(link);
+
+      // Revoke the Blob URL to free up memory
+      URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      console.error("Failed to download file:", error);
+    }
   };
 
   return (

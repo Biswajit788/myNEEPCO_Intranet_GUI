@@ -40,6 +40,7 @@ interface CircularData {
             };
         };
     };
+    createdAt: string;
 }
 
 const CircularPage = () => {
@@ -50,6 +51,7 @@ const CircularPage = () => {
     const [totalPages, setTotalPages] = useState<number>(1);
     const [searchTerm, setSearchTerm] = useState<string>('');
     const [totalRecords, setTotalRecords] = useState<number>(0);
+    const [lastUpdated, setLastUpdated] = useState<string | null>(null);
 
     const itemsPerPage = 10;
     const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || '';
@@ -64,8 +66,14 @@ const CircularPage = () => {
                 const data = await fetchCirculars();
                 const circularsData = data.data || [];
                 setCirculars(circularsData);
-                setTotalRecords(circularsData.length); // Set the total records
+                setTotalRecords(circularsData.length);
                 setTotalPages(Math.ceil(circularsData.length / itemsPerPage));
+
+                // Get the most recent createdAt date for last updated display
+                if (circularsData.length > 0) {
+                    const lastUpdatedDate = circularsData[0]?.attributes?.createdAt;
+                    setLastUpdated(lastUpdatedDate);
+                }
             } catch (error: any) {
                 if (error?.response?.status === 401 && error?.response?.data?.message === 'Unauthorized') {
                     setError('You are not authorized to view this page');
@@ -140,9 +148,9 @@ const CircularPage = () => {
                     All Circular/Notice
                 </Text>
             </Box>
-            <Box display="flex" justifyContent="flex-end" width="100%" p={2}>
+            <Box display="flex" justifyContent="flex-start" width="100%" p={2}>
                 <Box width={{ base: '100%', md: '40%' }}>
-                    <InputGroup mb={4}>
+                    <InputGroup mb={0}>
                         <InputLeftElement pointerEvents="none">
                             <SearchIcon color="gray.300" />
                         </InputLeftElement>
@@ -153,6 +161,14 @@ const CircularPage = () => {
                         />
                     </InputGroup>
                 </Box>
+            </Box>
+            {/* Display Last Updated Date */}
+            <Box textAlign="right" fontSize="sm" fontStyle={'italic'} mb={2}>
+                {lastUpdated && (
+                    <Text color="gray.400">
+                        Last Updated On: &nbsp;{new Date(lastUpdated).toLocaleDateString()}
+                    </Text>
+                )}
             </Box>
             {loading ? (
                 <Box>
@@ -180,7 +196,16 @@ const CircularPage = () => {
                                 .map((circular, index) => (
                                     <Tr key={circular.id}>
                                         <Td p={2}>{(currentPage - 1) * itemsPerPage + index + 1}</Td>
-                                        <Td p={2}>{circular.attributes.Title}</Td>
+                                        <Td
+                                            p={2}
+                                            style={{
+                                                whiteSpace: 'normal',
+                                                wordWrap: 'break-word',
+                                                overflowWrap: 'break-word',
+                                            }}
+                                        >
+                                            {circular.attributes.Title}
+                                        </Td>
                                         <Td p={2}>{new Date(circular.attributes.CircularDt).toLocaleDateString()}</Td>
                                         <Td p={2}>
                                             {circular.attributes.File?.data?.attributes?.url ? (

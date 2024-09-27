@@ -117,7 +117,12 @@ const NewsUpdates = () => {
   };
 
   return (
-    <Box bg={bgcolor} p={4} rounded="md" shadow="md">
+    <Box 
+      minH="200px"
+      bg={bgcolor} 
+      p={4} 
+      shadow="md"
+    >
       <Flex justifyContent="space-between" alignItems="center" mb={4}>
         <chakra.h3 fontSize="md" fontWeight="bold">
           Latest Updates
@@ -131,7 +136,7 @@ const NewsUpdates = () => {
         )}
       </Flex>
       <Divider />
-      <Box overflow="hidden" position="relative" minH="200px">
+      <Box overflow="hidden" minH={200} mt={2}>
         <Flex
           direction="column"
           animation={`${marquee} 5s linear infinite`}

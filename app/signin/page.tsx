@@ -1,5 +1,4 @@
-'use client'
-
+"use client"
 import {
   Flex,
   Box,
@@ -14,21 +13,25 @@ import {
   useColorModeValue,
   FormErrorMessage,
   Spinner,
-  useToast, // Import useToast
-} from '@chakra-ui/react'
-import { useEffect, useState } from 'react'
-import { Formik, Field, Form } from 'formik'
-import * as Yup from 'yup'
-import { useRouter } from 'next/navigation'
+  useToast,
+  useDisclosure,
+  useBreakpointValue
+} from '@chakra-ui/react';
+import Link from 'next/link';
+import { useEffect, useState } from 'react';
+import { Formik, Field, Form } from 'formik';
+import * as Yup from 'yup';
+import { useRouter } from 'next/navigation';
+import ForgotPasswordModal from '@/components/ForgotPasswordModal';
 
 interface SignInFormValues {
-  ecode: string;
+  username: string;
   password: string;
   rememberMe: boolean;
 }
 
 const SignInSchema = Yup.object().shape({
-  ecode: Yup.number()
+  username: Yup.number()
     .typeError('Must be a number')
     .integer('Must be an integer')
     .min(1000, 'Must be at least 4-digit')
@@ -39,27 +42,27 @@ const SignInSchema = Yup.object().shape({
 });
 
 export default function SignInPage() {
-
   const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || '';
   const router = useRouter();
+  const { isOpen, onOpen, onClose } = useDisclosure();
   const [loading, setLoading] = useState(false);
-  const toast = useToast(); // Initialize useToast
+  const toast = useToast();
+
+  // Use breakpoint value to adjust toast width based on screen size
+  const toastWidth = useBreakpointValue({ base: '80%', md: 'md' });
 
   useEffect(() => {
     router.prefetch('/dashboard');
   }, [router]);
 
   const handleSignIn = async (values: SignInFormValues) => {
-    setLoading(true); // Show spinner
-
+    setLoading(true);
     try {
       const response = await fetch(`${baseUrl}/api/auth/login-employee`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          ecode: values.ecode, // Using ecode as the identifier
+          username: values.username,
           password: values.password,
         }),
       });
@@ -67,11 +70,7 @@ export default function SignInPage() {
       const data = await response.json();
 
       if (response.ok) {
-        // Store the JWT token
         localStorage.setItem('token', data.jwt);
-        //localStorage.setItem('user', JSON.stringify(data.user));
-
-        // Show success toast
         toast({
           title: "Login successful",
           description: "You have successfully logged in.",
@@ -79,44 +78,14 @@ export default function SignInPage() {
           duration: 1000,
           isClosable: true,
           position: "top",
+          containerStyle: { maxWidth: toastWidth },
         });
-
-        // Wait for the toast to be visible before redirecting
         await new Promise(resolve => setTimeout(resolve, 1000));
-
-        // Redirect to the dashboard
         router.push('/dashboard');
-
-      } else if (response.status === 400) {
-        toast({
-          title: "Login Error",
-          description: 'User not found',
-          status: "error",
-          duration: 5000,
-          isClosable: true,
-          position: "top",
-        });
-      } else if (response.status === 401) {
-        toast({
-          title: "Login Error",
-          description: 'Incorrect Password',
-          status: "error",
-          duration: 5000,
-          isClosable: true,
-          position: "top",
-        });
       } else {
-        toast({
-          title: "An error occurred",
-          description: data.message || 'Sign-in failed',
-          status: "error",
-          duration: 5000,
-          isClosable: true,
-          position: "top",
-        });
+        handleErrors(response.status, data.message);
       }
     } catch (error) {
-      console.error('Sign-in failed:', error);
       toast({
         title: "Network Error",
         description: 'An unexpected error occurred. Please try again.',
@@ -124,9 +93,44 @@ export default function SignInPage() {
         duration: 5000,
         isClosable: true,
         position: "top",
+        containerStyle: { maxWidth: toastWidth },
       });
     } finally {
-      setLoading(false); // Hide spinner
+      setLoading(false);
+    }
+  };
+
+  const handleErrors = (status: number, message: string) => {
+    if (status === 400) {
+      toast({
+        title: "Login Error",
+        description: 'User does not exist',
+        status: "error",
+        duration: 2000,
+        isClosable: true,
+        position: "top",
+        containerStyle: { maxWidth: toastWidth },
+      });
+    } else if (status === 401) {
+      toast({
+        title: "Login Error",
+        description: 'Incorrect Password',
+        status: "error",
+        duration: 2000,
+        isClosable: true,
+        position: "top",
+        containerStyle: { maxWidth: toastWidth },
+      });
+    } else {
+      toast({
+        title: "An error occurred",
+        description: message || 'Sign-in failed',
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+        position: "top",
+        containerStyle: { maxWidth: toastWidth },
+      });
     }
   };
 
@@ -143,47 +147,61 @@ export default function SignInPage() {
     >
       <Stack
         spacing={8}
-        mx={'auto'}
+        ml={'auto'}
         maxW={'lg'}
         py={12}
         px={6}
         opacity={0.9}
+        w={'full'}
       >
         <Stack align={'center'}>
           <Heading fontSize={'4xl'} color={'white'}>Login</Heading>
         </Stack>
         <Box
-          rounded={'lg'}
+          rounded={'md'}
           bg={useColorModeValue('white', 'gray.700')}
           boxShadow={'lg'}
-          p={8}>
+          p={8}
+          width="100%"
+          maxW="sm"
+          mx="auto"
+        >
           <Formik
-            initialValues={{ ecode: '', password: '', rememberMe: false }}
+            initialValues={{ username: '', password: '', rememberMe: false }}
             validationSchema={SignInSchema}
             onSubmit={handleSignIn}
           >
-            {({ errors, touched }) => (
+            {({ errors, touched, isValid, dirty }) => (
               <Form>
                 <Stack spacing={4}>
-                  <FormControl id="ecode" isInvalid={!!errors.ecode && touched.ecode}>
-                    <FormLabel>Employee Code</FormLabel>
-                    <Field as={Input} type="text" name="ecode" placeholder="xxxx" autoFocus />
-                    <FormErrorMessage>{errors.ecode}</FormErrorMessage>
+                  <FormControl id="username" isInvalid={!!errors.username && touched.username} p={0} isRequired>
+                    <FormLabel>Username</FormLabel>
+                    <Field as={Input} type="text" name="username" placeholder="xxxx"/>
+                    <FormErrorMessage>{errors.username}</FormErrorMessage>
                   </FormControl>
-                  <FormControl id="password" isInvalid={!!errors.password && touched.password}>
+                  <FormControl id="password" isInvalid={!!errors.password && touched.password} p={0} isRequired>
                     <FormLabel>Password</FormLabel>
-                    <Field as={Input} type="password" name="password" />
+                    <Field as={Input} type="password" name="password"/>
                     <FormErrorMessage>{errors.password}</FormErrorMessage>
                   </FormControl>
                   <Stack spacing={10}>
                     <Stack
-                      direction={{ base: 'column', sm: 'row' }}
-                      align={'start'}
-                      justify={'space-between'}>
+                      direction={'column'}
+                      align={'end'}
+                      spacing={1}
+                    >
                       <Field as={Checkbox} name="rememberMe">
                         Remember me
                       </Field>
-                      <Text color={'blue.400'}>Forgot password?</Text>
+                      <Text color={'blue.400'} cursor="pointer" onClick={onOpen}>
+                        Forgot password?
+                      </Text>
+
+                      <Link href="/signup" passHref>
+                        <Text color="blue.400" _hover={{ textDecoration: 'underline' }}>
+                          Sign up
+                        </Text>
+                      </Link>
                     </Stack>
                     {loading ? (
                       <Flex justifyContent="center" alignItems="center">
@@ -197,6 +215,7 @@ export default function SignInPage() {
                         _hover={{
                           bg: 'blue.500',
                         }}
+                        isDisabled={!(isValid && dirty)}
                       >
                         Sign in
                       </Button>
@@ -208,6 +227,9 @@ export default function SignInPage() {
           </Formik>
         </Box>
       </Stack>
+
+      {/* Forgot Password Modal */}
+      <ForgotPasswordModal isOpen={isOpen} onClose={onClose} />
     </Flex>
-  )
+  );
 }

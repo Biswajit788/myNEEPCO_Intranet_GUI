@@ -53,9 +53,11 @@ import { IconType } from 'react-icons'
 import { useRouter, usePathname } from 'next/navigation'
 import { useRef } from 'react'
 import { jwtDecode } from 'jwt-decode'
+import ChangePasswordModal from './ChangePasswordModal'
 
 interface DecodedToken {
-  username: string;
+  fname: string;
+  lname: string,
   email: string;
 }
 
@@ -92,19 +94,17 @@ interface SidebarProps extends BoxProps {
 const LinkItems: Array<LinkItemProps> = [
   { name: 'My Dashboard', icon: AiOutlineDashboard, href: '/dashboard' },
   { name: 'HR', icon: FiTrendingUp, href: '#' },
-  { name: 'Generation Report', icon: AiOutlineFileDone, href: '#' },
+  { name: 'Power Gen Report', icon: AiOutlineFileDone, href: '#' },
   { name: 'Rules', icon: AiOutlineSchedule, href: '#' },
-  { name: 'ISO', icon: AiOutlineAreaChart, href: '#' },
+  { name: 'ISO', icon: AiOutlineAreaChart, href: '/dashboard/iso' },
   { name: 'Downloads', icon: AiOutlineDownload, href: '#' },
 ]
 
 const SidebarContent = ({ onClose, ...rest }: SidebarProps) => {
   const pathname = usePathname();
-  const scrollRef = useRef<HTMLDivElement>(null);
-
   const bgColor = useColorModeValue('white', 'gray.900');
   const btnColor = useColorModeValue('white', 'white');
-  const titlebgColor = useColorModeValue('gray.900', 'gray.900');
+  const titleBgColor = useColorModeValue('gray.900', 'gray.900');
   const isSmallScreen = useBreakpointValue({ base: true, md: false });
 
   // Conditional top padding based on screen size
@@ -126,7 +126,7 @@ const SidebarContent = ({ onClose, ...rest }: SidebarProps) => {
         <Flex
           alignItems="center"
           justifyContent="space-between"
-          bg={titlebgColor}
+          bg={titleBgColor}
           py={3}
           px={4}
           position="sticky"
@@ -136,13 +136,11 @@ const SidebarContent = ({ onClose, ...rest }: SidebarProps) => {
           <Text
             fontSize="md"
             fontWeight="bold"
-            display={{ base: 'block', md: 'none' }}
             color={'white'}
           >
             NEEPCO INTRANET
           </Text>
           <CloseButton
-            display={{ base: 'block', md: 'none' }}
             onClick={onClose}
             color={btnColor}
           />
@@ -156,27 +154,6 @@ const SidebarContent = ({ onClose, ...rest }: SidebarProps) => {
         overflowY="auto"
         height="100vh"
         maxHeight="calc(100vh - 140px)"
-        flexDirection="column"
-        css={{
-          '&::-webkit-scrollbar': {
-            width: '10px',
-          },
-          '&::-webkit-scrollbar-track': {
-            background: useColorModeValue('#f1f1f1', '#1a202c'),
-          },
-          '&::-webkit-scrollbar-thumb': {
-            background: useColorModeValue('#888', '#555'),
-            borderRadius: '10px',
-            border: '4px solid transparent',
-            backgroundClip: 'padding-box',
-          },
-          '&::-webkit-scrollbar-button': {
-            backgroundColor: useColorModeValue('#ddd', '#444'),
-            height: '16px',
-            width: '16px',
-            borderRadius: '4px',
-          },
-        }}
       >
         {LinkItems.map((link) => (
           <NavItem
@@ -197,7 +174,7 @@ const SidebarContent = ({ onClose, ...rest }: SidebarProps) => {
                   { name: 'Transfer & Posting', href: '/dashboard/hr/transfer', icon: AiOutlineContainer },
                   { name: 'Vigilance Clearance', href: '/dashboard/hr/vigilance', icon: AiOutlineContainer },
                 ]
-                : link.name === 'Generation Report'
+                : link.name === 'Power Gen Report'
                   ? [
                     { name: 'Daily Report', href: '/dashboard/report/daily', icon: AiOutlineContainer },
                     { name: 'Monthly Report', href: '/dashboard/report/monthly', icon: AiOutlineContainer },
@@ -205,9 +182,9 @@ const SidebarContent = ({ onClose, ...rest }: SidebarProps) => {
                   ]
                   : link.name === 'Rules'
                     ? [
-                      { name: 'DOP Rules', href: '', icon: AiOutlineContainer },
-                      { name: 'Disposal Manual', href: '', icon: AiOutlineContainer },
-                      { name: 'Contracts & Procurement Manual', href: '', icon: AiOutlineContainer },
+                      { name: 'DOP Rules', href: '/dashboard/rules/dop', icon: AiOutlineContainer },
+                      { name: 'Disposal Manual', href: '/dashboard/rules/disposal', icon: AiOutlineContainer },
+                      { name: 'Contracts & Procurement Manual', href: '/dashboard/rules/contracts', icon: AiOutlineContainer },
                     ]
                     : link.name === 'Downloads'
                       ? [
@@ -241,7 +218,7 @@ const NavItem = ({
   const handleClick = () => {
     if (subItems) {
       setIsOpen(!isOpen);
-    } else if (onLinkClick) {
+    } else if (onLinkClick) { // Check if onLinkClick is defined
       onLinkClick(); // Close the drawer when a link is clicked
     }
   };
@@ -262,48 +239,29 @@ const NavItem = ({
           onClick={handleClick}
           color={isActive ? activeColor : notActiveColor}
           bg={isActive ? bgColor : 'transparent'}
-          overflow="hidden"
-          position="relative"
           borderRight={isActive ? '4px solid' : 'none'} // Bolder right border when active
           borderColor={isActive ? activeColor : 'transparent'}
-          _before={{
-            content: '""',
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            bg: hoverBgColor,
-            transform: 'scaleX(0)',
-            transformOrigin: 'left',
-            transition: 'transform 0.3s ease',
-            zIndex: -1,
-          }}
           _hover={{
-            _before: {
-              transform: 'scaleY(0.9)', // Adjust this value to increase/decrease the height of the hover background
-            },
+            bg: hoverBgColor,
             color: activeColor,
           }}
+          aria-expanded={subItems ? isOpen : undefined} // For accessibility
         >
           {icon && (
             <Icon
-              mr="3"
+              mr="2"
               fontSize="18" // Set Icon size
-              _groupHover={{
-                color: activeColor,
-              }}
               as={icon}
             />
           )}
-          <Box flex="1" fontSize="md"> {/* Smaller font size */}
+          <Box flex="1" fontSize="sm" fontWeight="normal">
             {children}
           </Box>
           {subItems && (
             <Icon
               as={isOpen ? FiChevronDown : FiChevronRight}
               ml="auto"
-              transition="transform 0.2s"
+              transition="transform 0.3s"
             />
           )}
         </Flex>
@@ -318,11 +276,10 @@ const NavItem = ({
                   <Flex
                     align="center"
                     p="2"
-                    bg={isSubItemActive ? bgColor : 'transparent'}
+                    mb="2"
                     borderRight={isSubItemActive ? '4px solid' : 'none'} // Bolder right border when sub-item is active
                     borderColor={isSubItemActive ? activeColor : 'transparent'}
                     _hover={{
-                      transform: 'scale(1.05)',
                       bg: hoverBgColor,
                     }}
                     onClick={onLinkClick} // Close the drawer when a sub-item is clicked
@@ -345,7 +302,6 @@ const NavItem = ({
         )}
       </Collapse>
     </Box>
-
   );
 };
 
@@ -355,8 +311,10 @@ const MobileNav = ({ onOpen, ...rest }: MobileProps) => {
 
   const [isSignOutOpen, setIsSignOutOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false); // State for loading spinner
-  const [username, setUsername] = useState<string>(''); // State for username
+  const [firstname, setFirstname] = useState<string>('');
+  const [lastname, setLastname] = useState<string>('');
   const [email, setEmail] = useState<string>(''); // State for Email
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const cancelRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
@@ -364,7 +322,8 @@ const MobileNav = ({ onOpen, ...rest }: MobileProps) => {
     if (token) {
       try {
         const decodedToken: DecodedToken = jwtDecode(token);
-        setUsername(decodedToken.username);
+        setFirstname(decodedToken.fname);
+        setLastname(decodedToken.lname);
         setEmail(decodedToken.email);
       } catch (error) {
         console.error('Error decoding token:', error);
@@ -393,6 +352,14 @@ const MobileNav = ({ onOpen, ...rest }: MobileProps) => {
 
   const cancelSignOut = () => {
     setIsSignOutOpen(false); // Close the AlertDialog
+  };
+
+  const openChangePasswordModal = () => {
+    setIsPasswordModalOpen(true);
+  };
+
+  const closeChangePasswordModal = () => {
+    setIsPasswordModalOpen(false);
   };
 
   const menuItemHoverStyle = {
@@ -479,7 +446,7 @@ const MobileNav = ({ onOpen, ...rest }: MobileProps) => {
                     spacing="1px"
                     ml="2"
                   >
-                    <Text fontSize="sm">{username || 'Loading...'}</Text>
+                    <Text fontSize="sm">{firstname}&nbsp;{lastname}</Text>
                     <Text fontSize="xs" color="gray.600">
                       {email || 'Loading...'}
                     </Text>
@@ -497,7 +464,7 @@ const MobileNav = ({ onOpen, ...rest }: MobileProps) => {
                   <MenuItem bg={useColorModeValue('white', 'gray.900')} _hover={menuItemHoverStyle}>My Profile</MenuItem>
                 </Link>
                 <Link href="#" passHref>
-                  <MenuItem bg={useColorModeValue('white', 'gray.900')} _hover={menuItemHoverStyle}>Change Password</MenuItem>
+                  <MenuItem bg={useColorModeValue('white', 'gray.900')} _hover={menuItemHoverStyle} onClick={openChangePasswordModal}>Change Password</MenuItem>
                 </Link>
                 <MenuDivider />
                 <MenuItem bg={useColorModeValue('white', 'gray.900')} _hover={menuItemHoverStyle} onClick={handleSignOut}>
@@ -509,6 +476,9 @@ const MobileNav = ({ onOpen, ...rest }: MobileProps) => {
         </HStack>
       </Flex>
 
+      {/* Change Password Modal */}
+      <ChangePasswordModal isOpen={isPasswordModalOpen} onClose={closeChangePasswordModal} />
+
       {/* AlertDialog for Sign Out Confirmation */}
       <AlertDialog
         isOpen={isSignOutOpen}
@@ -516,20 +486,34 @@ const MobileNav = ({ onOpen, ...rest }: MobileProps) => {
         onClose={cancelSignOut}
       >
         <AlertDialogOverlay>
-          <AlertDialogContent>
-            <AlertDialogHeader fontSize="lg" fontWeight="bold">
+          <AlertDialogContent
+            maxWidth={{ base: '70%', md: '400px' }}
+          >
+            <AlertDialogHeader
+              fontSize={{ base: 'md', md: 'lg' }}
+              fontWeight="bold"
+            >
               Sign Out
             </AlertDialogHeader>
 
-            <AlertDialogBody>
+            <AlertDialogBody fontSize={{ base: 'sm', md: 'md' }}>
               Are you sure you want to sign out?
             </AlertDialogBody>
 
             <AlertDialogFooter>
-              <Button ref={cancelRef} onClick={cancelSignOut}>
+              <Button
+                ref={cancelRef}
+                onClick={cancelSignOut}
+                size={{ base: 'sm', md: 'md' }}
+              >
                 Cancel
               </Button>
-              <Button colorScheme="red" onClick={confirmSignOut} ml={3}>
+              <Button
+                colorScheme="red"
+                onClick={confirmSignOut}
+                ml={3}
+                size={{ base: 'sm', md: 'md' }}
+              >
                 Sign Out
               </Button>
             </AlertDialogFooter>

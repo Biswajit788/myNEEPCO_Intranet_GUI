@@ -277,6 +277,7 @@ export default function VigilancePage() {
                         const attributes = vigilance.attributes;
                         const fileUrlReport = attributes.File1?.data?.attributes?.url;
                         const fileUrlList = attributes.File2?.data?.attributes?.url;
+                        
                         const createdAt = formatDateTime(attributes.createdAt);
 
                         return (

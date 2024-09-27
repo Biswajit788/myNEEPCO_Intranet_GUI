@@ -2,9 +2,42 @@ import axios from 'axios';
 
 const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
-// Function to retrieve the token from localStorage
+//Function to register new user to Strapi
+export const registerUser = async (userData: {
+  firstname: string;
+  lastname: string;
+  username: string;
+  dob: string;
+  email: string;
+  password: string;
+}) => {
+  try {
+    const response = await axios.post(`${API_URL}/api/auth/local/register`, {
+      username: userData.username,
+      email: userData.email,
+      password: userData.password,
+      firstname: userData.firstname,
+      lastname: userData.lastname,
+      dob: userData.dob,
+    }, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    if (error.response && error.response.data && error.response.data.error) {
+      const errorMessage = error.response.data.error.message || 'Registration failed';
+      throw new Error(errorMessage);
+    } else {
+      throw new Error('An unknown error occurred during registration.');
+    }
+  }
+};
+
 const getToken = () => {
-  return localStorage.getItem('token'); // Replace with your token storage mechanism
+  return localStorage.getItem('token');
 };
 
 // Function to create headers with the Authorization token
@@ -45,6 +78,13 @@ export const fetchSeniorities = async () => {
 
 export const fetchCirculars = async () => {
   const response = await axios.get(`${API_URL}/api/circulars?populate=File&sort=id:desc`, {
+    headers: getHeaders(),
+  });
+  return response.data;
+};
+
+export const fetchAccolades = async () => {
+  const response = await axios.get(`${API_URL}/api/accolades?populate=File&sort=id:desc`, {
     headers: getHeaders(),
   });
   return response.data;
@@ -108,7 +148,7 @@ export const fetchDailyGenerationReport = async (date: string) => {
 export const fetchMonthlyGenerationReport = async (month: string, year: string) => {
   try {
     const response = await axios.get(`${API_URL}/api/monthly-generations`, {
-      params: { month, year }, 
+      params: { month, year },
       headers: getHeaders(),
     });
     return response.data;
@@ -127,6 +167,50 @@ export const fetchAnnualGenerationReport = async (year: string) => {
     return response.data;
   } catch (error) {
     console.error('Error fetching data:', error);
+    throw error;
+  }
+};
+
+export const fetchIsoPdf = async () => {
+  const response = await fetch(`${API_URL}/api/isos?populate=File`, {
+    headers: getHeaders(),
+  });
+  const data = await response.json();
+  return data;
+};
+
+export const fetchDopRules = async () => {
+  try {
+    const response = await axios.get(`${API_URL}/api/dop-rules?populate[0]=File&populate[1]=File1`, {
+      headers: getHeaders(),
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching DoP rules:', error);
+    throw error;
+  }
+};
+
+export const fetchDisposalRules = async () => {
+  try {
+    const response = await axios.get(`${API_URL}/api/disposal-rules?populate[0]=File&populate[1]=File1`, {
+      headers: getHeaders(),
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching DoP rules:', error);
+    throw error;
+  }
+};
+
+export const fetchCpRules = async () => {
+  try {
+    const response = await axios.get(`${API_URL}/api/cp-rules?populate[0]=File&populate[1]=File1`, {
+      headers: getHeaders(),
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching DoP rules:', error);
     throw error;
   }
 };
