@@ -49,6 +49,10 @@ export default function SignupPage() {
     email: Yup.string().email('Invalid email').required('Email is required'),
     password: Yup.string()
       .min(6, 'Password must be at least 6 characters')
+      .matches(/[A-Z]/, 'Password must contain at least one uppercase letter')
+      .matches(/[a-z]/, 'Password must contain at least one lowercase letter')
+      .matches(/\d/, 'Password must contain at least one number')
+      .matches(/[!@#$%^&*(),.?":{}|<>]/, 'Password must contain at least one special character')
       .required('Password is required'),
     confirmPassword: Yup.string()
       .oneOf([Yup.ref('password')], 'Passwords does not match')
@@ -97,16 +101,16 @@ export default function SignupPage() {
       minH={'100vh'}
       align={'center'}
       justify={'center'}
-      bg={useColorModeValue('gray.50', 'gray.800')}
-      backgroundImage="url('/AGTCCP.jpg')"
+      bg={useColorModeValue('#43a2e9', 'gray.800')}
+      backgroundImage="url('PowerHouse.jpg')"
       backgroundSize="cover"
       backgroundPosition="center"
       backgroundRepeat="no-repeat"
     >
-      <Stack spacing={8} mx={'auto'} maxW={'lg'} py={12} px={6} opacity={0.9}>
+      <Stack spacing={4} mx={'auto'} maxW={'lg'} py={12} px={6} opacity={0.9}>
         <Stack align={'center'}>
-          <Heading fontSize={'4xl'} textAlign={'center'} color={'whitesmoke'}>
-            Sign up
+          <Heading fontSize={'3xl'} textAlign={'center'} color={'white'}>
+            Sign-up
           </Heading>
         </Stack>
         <Box
@@ -146,13 +150,13 @@ export default function SignupPage() {
                   </FormControl>
                   <FormControl id="dob" isInvalid={!!errors.dob && touched.dob} isRequired>
                     <FormLabel>Date of Birth</FormLabel>
-                    <Field 
-                      as={Input} 
-                      type="date" 
-                      name="dob" 
-                      size="sm" 
-                      placeholder="Birthday Date" 
-                      textTransform="uppercase" 
+                    <Field
+                      as={Input}
+                      type="date"
+                      name="dob"
+                      size="sm"
+                      placeholder="Birthday Date"
+                      textTransform="uppercase"
                       max={getCurrentDate()} // Disable future dates
                     />
                     <FormErrorMessage>{errors.dob}</FormErrorMessage>

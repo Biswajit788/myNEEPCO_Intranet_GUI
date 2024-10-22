@@ -1,4 +1,4 @@
-import { Box, Divider, Flex, Image, Text } from '@chakra-ui/react';
+import { Box, Divider, Flex, Image, Text, useColorModeValue } from '@chakra-ui/react';
 
 // Function to format the date with the current year
 const formatDateWithCurrentYear = (dateString: string) => {
@@ -12,19 +12,6 @@ const formatDateWithCurrentYear = (dateString: string) => {
     // Format the date as month, day, and year
     const options: Intl.DateTimeFormatOptions = { month: 'long', day: 'numeric', year: 'numeric' };
     return upcomingBirthday.toLocaleDateString(undefined, options);
-};
-
-const calculateAge = (birthday: string) => {
-    const today = new Date();
-    const birthDate = new Date(birthday);
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const monthDifference = today.getMonth() - birthDate.getMonth();
-
-    if (monthDifference < 0 || (monthDifference === 0 && today.getDate() < birthDate.getDate())) {
-        age--;
-    }
-
-    return age;
 };
 
 const isBirthdayToday = (birthday: string) => {
@@ -54,6 +41,7 @@ interface Person {
     name: string;
     birthday: string;
     image: string;
+    username: string;
 }
 
 const BirthdayList = ({ people }: { people: Person[] }) => {
@@ -70,70 +58,88 @@ const BirthdayList = ({ people }: { people: Person[] }) => {
         return aDate.getTime() - bDate.getTime();
     });
 
+    const cardBgColor = useColorModeValue('white', 'gray.700');
+
     return (
-        <Box>
-            {/* Today’s Birthdays */}
-            <Text fontSize="lg" fontWeight="bold" mb={4}>
-                {peopleWithTodayBirthday.length} Birthday{peopleWithTodayBirthday.length !== 1 ? 's' : ''} today
-            </Text>
-            <Divider />
-            {peopleWithTodayBirthday.length === 0 ? (
-                <Text>No birthdays today.</Text>
-            ) : (
-                peopleWithTodayBirthday.map((person) => {
-                    const { id, name, birthday, image } = person;
-                    const age = calculateAge(birthday);
+        <Flex direction={{ base: 'column', md: 'column' }} gap={4}>
+            {/* Card for Today’s Birthdays */}
+            <Box flex="1" boxShadow="lg" borderRadius="md" p={4} bg={cardBgColor}>
+                <Text fontSize="lg" fontWeight="bold" mb={4}>
+                    {peopleWithTodayBirthday.length} Birthday{peopleWithTodayBirthday.length !== 1 ? 's' : ''} today
+                </Text>
+                {/* Show the birthday message only if there is at least one birthday */}
+                {peopleWithTodayBirthday.length > 0 && (
+                    <Box mb={4} p={4} bg="yellow.200" borderRadius="md" textAlign="center">
+                        <Text fontSize="lg" fontWeight="bold">
+                            🎉 {peopleWithTodayBirthday.length === 1 ? 'Happy Birthday to our wonderful birthday star!' : 'Happy Birthday to all our wonderful birthday stars!'} 🎉
+                        </Text>
+                        <Text fontSize="sm" color="gray.600">
+                            {peopleWithTodayBirthday.length === 1
+                                ? 'Wishing you a day filled with love, joy, and wonderful memories!'
+                                : 'Wishing you all a day filled with love, joy, and wonderful memories!'}
+                        </Text>
+                    </Box>
+                )}
 
-                    return (
-                        <Flex key={id} mb={4} align="center" mt="6">
-                            <Image
-                                borderRadius="full"
-                                boxSize="50px"
-                                src={image}
-                                alt={name}
-                                mr={4}
-                            />
-                            <Box>
-                                <Text fontWeight="bold" fontSize="sm">{name}</Text>
-                                <Text color="gray.500" fontSize={'xs'}>{age} years old</Text>
-                            </Box>
-                        </Flex>
-                    );
-                })
-            )}
+                <Divider />
+                {peopleWithTodayBirthday.length === 0 ? (
+                    <Text>No birthdays today.</Text>
+                ) : (
+                    peopleWithTodayBirthday.map((person) => {
+                        const { id, name, image, username } = person;
 
-            {/* Upcoming Birthdays This Month */}
-            <Divider my={6} />
-            <Text fontSize="lg" fontWeight="bold" mb={4}>
-                Upcoming Birthday{upcomingBirthdaysThisMonth.length !== 1 ? 's' : ''} this month
-            </Text>
-            {upcomingBirthdaysThisMonth.length === 0 ? (
-                <Text>No upcoming birthdays this month.</Text>
-            ) : (
-                upcomingBirthdaysThisMonth.map((person) => {
-                    const { id, name, birthday, image } = person;
-                    const age = calculateAge(birthday);
-                    const formattedDate = formatDateWithCurrentYear(birthday);
+                        return (
+                            <Flex key={id} mb={4} align="center" mt="6">
+                                <Image
+                                    borderRadius="full"
+                                    boxSize="40px"
+                                    src={image}
+                                    alt={name}
+                                    mr={4}
+                                />
+                                <Box>
+                                    <Text fontWeight="bold" fontSize="sm">{name}</Text>
+                                    <Text color="gray.500" fontSize={'xs'}>Ecode: {username}</Text>
+                                </Box>
+                            </Flex>
+                        );
+                    })
+                )}
+            </Box>
 
-                    return (
-                        <Flex key={id} mb={4} align="center" mt="6">
-                            <Image
-                                borderRadius="full"
-                                boxSize="50px"
-                                src={image}
-                                alt={name}
-                                mr={4}
-                            />
-                            <Box>
-                                <Text fontWeight="bold" fontSize="sm">{name}</Text>
-                                <Text color="gray.500" fontSize={'xs'}>{age} years old</Text>
-                                <Text color="gray.400" fontSize={'xs'}>{formattedDate}</Text>
-                            </Box>
-                        </Flex>
-                    );
-                })
-            )}
-        </Box>
+            {/* Card for Upcoming Birthdays This Month */}
+            <Box flex="1" boxShadow="lg" borderRadius="md" p={4} bg={cardBgColor}>
+                <Text fontSize="lg" fontWeight="bold" mb={4}>
+                    Upcoming Birthday{upcomingBirthdaysThisMonth.length !== 1 ? 's' : ''} this month
+                </Text>
+                <Divider my={4} />
+                {upcomingBirthdaysThisMonth.length === 0 ? (
+                    <Text>No upcoming birthdays this month.</Text>
+                ) : (
+                    upcomingBirthdaysThisMonth.map((person) => {
+                        const { id, name, birthday, image, username } = person;
+                        const formattedDate = formatDateWithCurrentYear(birthday);
+
+                        return (
+                            <Flex key={id} mb={4} align="center" mt="2">
+                                <Image
+                                    borderRadius="full"
+                                    boxSize="40px"
+                                    src={image}
+                                    alt={name}
+                                    mr={4}
+                                />
+                                <Box>
+                                    <Text fontWeight="bold" fontSize="sm">{name}</Text>
+                                    <Text color="gray.500" fontSize={'xs'}>Ecode: {username}</Text>
+                                    <Text color="gray.400" fontSize={'xs'}>{formattedDate}</Text>
+                                </Box>
+                            </Flex>
+                        );
+                    })
+                )}
+            </Box>
+        </Flex>
     );
 };
 

@@ -21,8 +21,9 @@ import {
     MenuItem,
     IconButton,
     Link,
+    Divider,
 } from '@chakra-ui/react';
-import { IoChevronDown, IoChevronForward, IoHomeOutline } from 'react-icons/io5';
+import { IoChevronDown, IoHomeOutline } from 'react-icons/io5';
 import { FaGlobe } from 'react-icons/fa';
 import { HamburgerIcon } from '@chakra-ui/icons';
 
@@ -57,14 +58,14 @@ const MenuComponent = () => {
 
     return (
         <>
-            <Box bg="transparent" px={4}>
+            <Box bg="transparent" px={0}>
                 <Flex h={20} alignItems={'center'} justifyContent={'space-between'}>
                     {/* Hamburger icon for smaller screens */}
                     <IconButton
                         size={'md'}
                         icon={<HamburgerIcon />}
                         aria-label={'Open Menu'}
-                        display={{ md: 'none' }} // Show only on smaller screens
+                        display={{ md: 'none' }}
                         onClick={onOpen}
                     />
 
@@ -85,11 +86,11 @@ const MenuComponent = () => {
                                     fontWeight="normal"
                                     variant={"link"}
                                     colorScheme="white"
-                                    rightIcon={isPortalOpen ? <IoChevronDown /> : <IoChevronForward />}
+                                    rightIcon={<IoChevronDown />}
                                     onClick={onTogglePortal}
                                     ml={2}
                                 >
-                                    Internal Portal
+                                    External Link
                                 </MenuButton>
                                 <MenuList bg="gray.700">
                                     <MenuItem as={Link} href="http://10.3.0.10:8080/neepcopf/" target="_blank" bg="transparent" _hover={{ color: 'blue.500', bg: 'gray.200' }}>
@@ -100,6 +101,9 @@ const MenuComponent = () => {
                                     </MenuItem>
                                     <MenuItem as={Link} href="http://10.3.0.10:8080/MBF/" target="_blank" bg="transparent" _hover={{ color: 'blue.500', bg: 'gray.200' }}>
                                         MBF
+                                    </MenuItem>
+                                    <MenuItem as={Link} href="http://10.3.0.10:8080/nedcss/" target="_blank" bg="transparent" _hover={{ color: 'blue.500', bg: 'gray.200' }}>
+                                        NEDCSS
                                     </MenuItem>
                                     <MenuItem as={Link} href="http://10.3.0.10:8080/OnlineComplain/" target="_blank" bg="transparent" _hover={{ color: 'blue.500', bg: 'gray.200' }}>
                                         NOCRP
@@ -121,6 +125,7 @@ const MenuComponent = () => {
                 <DrawerContent>
                     <DrawerCloseButton />
                     <DrawerHeader>NEEPCO INTRANET</DrawerHeader>
+                    <Divider />
                     <DrawerBody>
                         <Stack spacing={4}>
                             <Flex justify="space-between" align="center">
@@ -132,7 +137,7 @@ const MenuComponent = () => {
                                 <Button
                                     variant={"link"}
                                     colorScheme="white"
-                                    rightIcon={isPortalOpen ? <IoChevronDown /> : <IoChevronForward />}
+                                    rightIcon={<IoChevronDown />}
                                     onClick={onTogglePortal}
                                     ml={2}
                                 />
@@ -157,6 +162,12 @@ const MenuComponent = () => {
                                         <Flex align="center">
                                             <FaGlobe />
                                             <Text ml={2}>MBF</Text>
+                                        </Flex>
+                                    </Link>
+                                    <Link href="http://10.3.0.10:8080/nedcss/" target="_blank" rel="noopener noreferrer">
+                                        <Flex align="center">
+                                            <FaGlobe />
+                                            <Text ml={2}>NEDCSS</Text>
                                         </Flex>
                                     </Link>
                                     <Link href="http://10.3.0.10:8080/OnlineComplain/" target="_blank" rel="noopener noreferrer">

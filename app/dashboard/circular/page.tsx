@@ -195,7 +195,7 @@ const CircularPage = () => {
                                 .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
                                 .map((circular, index) => (
                                     <Tr key={circular.id}>
-                                        <Td p={2}>{(currentPage - 1) * itemsPerPage + index + 1}</Td>
+                                        <Td p={4}>{(currentPage - 1) * itemsPerPage + index + 1}</Td>
                                         <Td
                                             p={2}
                                             style={{

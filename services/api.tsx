@@ -158,6 +158,19 @@ export const fetchMonthlyGenerationReport = async (month: string, year: string) 
   }
 };
 
+export const fetchQuarterlyGenerationReport = async (quarter: string, year: string) => {
+  try {
+    const response = await axios.get(`${API_URL}/api/quarterly-generations`, {
+      params: { quarter, year },
+      headers: getHeaders(),
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching data:', error);
+    throw error;
+  }
+};
+
 export const fetchAnnualGenerationReport = async (year: string) => {
   try {
     const response = await axios.get(`${API_URL}/api/annual-generations`, {
@@ -213,4 +226,18 @@ export const fetchCpRules = async () => {
     console.error('Error fetching DoP rules:', error);
     throw error;
   }
+};
+
+export const fetchErpData = async () => {
+  const response = await axios.get(`${API_URL}/api/erps?populate=File&sort=id:desc`, {
+    headers: getHeaders(),
+  });
+  return response.data;
+};
+
+export const fetchITPolicyData = async () => {
+  const response = await axios.get(`${API_URL}/api/it-policies?populate=File&sort=id:desc`, {
+    headers: getHeaders(),
+  });
+  return response.data;
 };

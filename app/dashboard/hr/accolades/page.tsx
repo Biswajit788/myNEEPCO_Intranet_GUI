@@ -154,7 +154,7 @@ const AccoladesPage = () => {
               <SearchIcon color="gray.300" />
             </InputLeftElement>
             <Input
-              placeholder="Search Accolades"
+              placeholder="Search"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -193,7 +193,7 @@ const AccoladesPage = () => {
                 .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
                 .map((accolade, index) => (
                   <Tr key={accolade.id}>
-                    <Td p={2}>{(currentPage - 1) * itemsPerPage + index + 1}</Td>
+                    <Td p={4}>{(currentPage - 1) * itemsPerPage + index + 1}</Td>
                     <Td
                       p={2}
                       style={{

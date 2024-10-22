@@ -46,10 +46,11 @@ import {
   FiChevronRight,
 } from 'react-icons/fi'
 import {
-  AiOutlineDashboard, AiOutlineDownload, AiOutlineFileDone,
-  AiOutlineSchedule, AiOutlineAreaChart, AiOutlineContainer
+  AiOutlineDashboard, AiOutlineDownload, AiOutlineFileSearch ,
+  AiOutlineSchedule, AiOutlineAreaChart, AiOutlineContainer,
 } from "react-icons/ai";
 import { IconType } from 'react-icons'
+import { FaComputer } from "react-icons/fa6";
 import { useRouter, usePathname } from 'next/navigation'
 import { useRef } from 'react'
 import { jwtDecode } from 'jwt-decode'
@@ -94,7 +95,8 @@ interface SidebarProps extends BoxProps {
 const LinkItems: Array<LinkItemProps> = [
   { name: 'My Dashboard', icon: AiOutlineDashboard, href: '/dashboard' },
   { name: 'HR', icon: FiTrendingUp, href: '#' },
-  { name: 'Power Gen Report', icon: AiOutlineFileDone, href: '#' },
+  { name: 'IT', icon: FaComputer, href: '#' },
+  { name: 'Power Gen Report', icon: AiOutlineFileSearch, href: '#' },
   { name: 'Rules', icon: AiOutlineSchedule, href: '#' },
   { name: 'ISO', icon: AiOutlineAreaChart, href: '/dashboard/iso' },
   { name: 'Downloads', icon: AiOutlineDownload, href: '#' },
@@ -151,9 +153,10 @@ const SidebarContent = ({ onClose, ...rest }: SidebarProps) => {
         mt={2}
         py={0}
         px={0}
+        className="custom-scrollbar"
         overflowY="auto"
         height="100vh"
-        maxHeight="calc(100vh - 140px)"
+        maxHeight="calc(100vh - 100px)"
       >
         {LinkItems.map((link) => (
           <NavItem
@@ -178,6 +181,7 @@ const SidebarContent = ({ onClose, ...rest }: SidebarProps) => {
                   ? [
                     { name: 'Daily Report', href: '/dashboard/report/daily', icon: AiOutlineContainer },
                     { name: 'Monthly Report', href: '/dashboard/report/monthly', icon: AiOutlineContainer },
+                    { name: 'Quarterly Report', href: '/dashboard/report/quarterly', icon: AiOutlineContainer },
                     { name: 'Annual Report', href: '/dashboard/report/annual', icon: AiOutlineContainer },
                   ]
                   : link.name === 'Rules'
@@ -186,13 +190,18 @@ const SidebarContent = ({ onClose, ...rest }: SidebarProps) => {
                       { name: 'Disposal Manual', href: '/dashboard/rules/disposal', icon: AiOutlineContainer },
                       { name: 'Contracts & Procurement Manual', href: '/dashboard/rules/contracts', icon: AiOutlineContainer },
                     ]
-                    : link.name === 'Downloads'
+                    : link.name === 'IT'
                       ? [
-                        { name: 'Forms & Application', href: '/dashboard/download/forms', icon: AiOutlineContainer },
-                        { name: 'General', href: '', icon: AiOutlineContainer },
-                        { name: 'Photo Gallery', href: '/dashboard/download/photo', icon: AiOutlineContainer },
+                        { name: 'ERP', href: '/dashboard/it/erp', icon: AiOutlineContainer },
+                        { name: 'Policy', href: '/dashboard/it/policy', icon: AiOutlineContainer },
                       ]
-                      : undefined
+                      : link.name === 'Downloads'
+                        ? [
+                          { name: 'Forms & Application', href: '/dashboard/download/forms', icon: AiOutlineContainer },
+                          { name: 'General', href: '', icon: AiOutlineContainer },
+                          { name: 'Photo Gallery', href: '/dashboard/download/photo', icon: AiOutlineContainer },
+                        ]
+                        : undefined
             }
             onLinkClick={onClose}
           >
@@ -218,7 +227,7 @@ const NavItem = ({
   const handleClick = () => {
     if (subItems) {
       setIsOpen(!isOpen);
-    } else if (onLinkClick) { // Check if onLinkClick is defined
+    } else if (onLinkClick) {
       onLinkClick(); // Close the drawer when a link is clicked
     }
   };
@@ -239,18 +248,17 @@ const NavItem = ({
           onClick={handleClick}
           color={isActive ? activeColor : notActiveColor}
           bg={isActive ? bgColor : 'transparent'}
-          borderRight={isActive ? '4px solid' : 'none'} // Bolder right border when active
+          borderRight={isActive ? '4px solid' : 'none'}
           borderColor={isActive ? activeColor : 'transparent'}
           _hover={{
             bg: hoverBgColor,
             color: activeColor,
           }}
-          aria-expanded={subItems ? isOpen : undefined} // For accessibility
         >
           {icon && (
             <Icon
               mr="2"
-              fontSize="18" // Set Icon size
+              fontSize="18"
               as={icon}
             />
           )}
@@ -270,21 +278,22 @@ const NavItem = ({
         {subItems && (
           <Box pl="6" mt="2" display="flex" flexDirection="column">
             {subItems.map((item) => {
-              const isSubItemActive = pathname === item.href;
+              const isSubItemActive = pathname === item.href; // Determine if the sub-item is active
               return (
                 <Link key={item.name} href={item.href} passHref>
                   <Flex
                     align="center"
                     p="2"
                     mb="2"
-                    borderRight={isSubItemActive ? '4px solid' : 'none'} // Bolder right border when sub-item is active
+                    borderRight={isSubItemActive ? '4px solid' : 'none'}
                     borderColor={isSubItemActive ? activeColor : 'transparent'}
                     _hover={{
-                      bg: hoverBgColor,
+                      bg: hoverBgColor, // Change background color on hover
                     }}
                     onClick={onLinkClick} // Close the drawer when a sub-item is clicked
                     color={isSubItemActive ? activeColor : 'inherit'}
                     fontSize="sm" // Set font size smaller for sub-items
+                    bg={isSubItemActive ? bgColor : 'transparent'} // Set background color for active sub-items
                   >
                     {item.icon && (
                       <Icon
@@ -304,6 +313,7 @@ const NavItem = ({
     </Box>
   );
 };
+
 
 const MobileNav = ({ onOpen, ...rest }: MobileProps) => {
   const { colorMode, toggleColorMode } = useColorMode();

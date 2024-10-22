@@ -3,6 +3,15 @@ import { Box, Stack, useColorMode, useColorModeValue } from '@chakra-ui/react';
 import List from '@/components/BirthdayList';
 import axios from 'axios';
 
+// Define the Person interface for TypeScript
+interface Person {
+    id: number;
+    name: string;
+    birthday: string;
+    image: string;
+    username: string;
+}
+
 // Define the URL for your Strapi backend endpoint
 const API_URL = `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/users`;
 
@@ -15,15 +24,16 @@ export default function Home() {
         const fetchPeople = async () => {
             try {
                 const response = await axios.get(API_URL);
-                const users = response.data;              
+                const users = response.data;
                 // Map the response to the required format
                 const formattedUsers = users.map((user: any) => ({
                     id: user.id,
                     name: `${user.firstname} ${user.lastname}`,
                     birthday: user.dob,
-                    image: '/user.png'
+                    image: '/user.png',
+                    username: user.username,
                 }));
-                
+
                 setPeople(formattedUsers);
             } catch (error) {
                 console.error('Error fetching data', error);
@@ -49,34 +59,6 @@ export default function Home() {
     }
 
     return (
-        <Box
-            alignItems="center"
-            bg={bgColor}
-            p={{ base: 4, md: 6 }} 
-            rounded="md"
-            minH={600}
-        >
-            <Box 
-                bg={cardBgColor} 
-                color={textColor} 
-                p={{ base: 4, md: 6 }}
-                borderRadius="md" 
-                boxShadow="lg" 
-                width={{ base: "full", sm: "md", md: "400px" }}
-                maxW="full"
-            >
-                <Stack>
-                    <List people={people} />
-                </Stack>
-            </Box>
-        </Box>
+        <List people={people} />
     );
-}
-
-// Define the Person interface for TypeScript
-interface Person {
-    id: number;
-    name: string;
-    birthday: string;
-    image: string;
 }
