@@ -100,11 +100,11 @@ export default function ForgotPasswordModal({ isOpen, onClose }: ForgotPasswordM
     <Modal closeOnOverlayClick={false} isOpen={isOpen} onClose={onClose} isCentered>
       <ModalOverlay bg="rgba(0, 0, 0, 0.8)" />
       <ModalContent maxWidth={{ base: '90%', md: '500px' }}>
-        <ModalHeader fontSize={{ base: 'lg', md: 'xl' }}>Forgot Password</ModalHeader>
+        <ModalHeader fontSize={{ base: 'sm', md: 'md' }}>Forgot Password</ModalHeader>
         <Divider />
         <ModalCloseButton size={{ base: 'sm', md: 'md' }} />
 
-        <ModalBody mt={4}>
+        <ModalBody mt={2}>
           <form onSubmit={formik.handleSubmit}>
             <FormControl id="email" isInvalid={!!(formik.touched.email && formik.errors.email)}>
               <FormLabel fontSize={{ base: 'sm', md: 'md' }}>Email address</FormLabel>
@@ -115,7 +115,7 @@ export default function ForgotPasswordModal({ isOpen, onClose }: ForgotPasswordM
                 onChange={formik.handleChange}
                 onBlur={formik.handleBlur}
                 placeholder="Enter your email"
-                size={{ base: 'md', md: 'md' }}
+                size={{ base: 'sm', md: 'sm' }}
                 isRequired
               />
               {formik.touched.email && formik.errors.email && (
@@ -131,7 +131,7 @@ export default function ForgotPasswordModal({ isOpen, onClose }: ForgotPasswordM
           <Button
             colorScheme="blue"
             mr={3}
-            size={{ base: 'sm', md: 'md' }}
+            size={{ base: 'sm', md: 'sm' }}
             onClick={() => formik.handleSubmit()}
             isLoading={formik.isSubmitting}
             loadingText="Please wait.."
@@ -139,7 +139,7 @@ export default function ForgotPasswordModal({ isOpen, onClose }: ForgotPasswordM
           >
             Send Reset Link
           </Button>
-          <Button variant="ghost" onClick={onClose} size={{ base: 'sm', md: 'md' }}>
+          <Button variant="ghost" onClick={onClose} size={{ base: 'sm', md: 'sm' }}>
             Cancel
           </Button>
         </ModalFooter>

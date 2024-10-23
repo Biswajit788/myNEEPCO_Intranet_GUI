@@ -150,7 +150,7 @@ const NewsUpdates = () => {
       </Flex>
       {/* Box content comes after the Flex */}
       <Box
-        minH="200px"
+        h="360px"
         bg={bgcolor}
         p={4}
         shadow="md"
@@ -159,7 +159,7 @@ const NewsUpdates = () => {
       >
         <Box
           overflow="hidden"
-          minH={200}
+          h="100%"
           onMouseEnter={() => { setIsHovered(true) }}
           onMouseLeave={() => { setIsHovered(false) }}
         >

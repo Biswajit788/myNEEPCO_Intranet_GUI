@@ -35,7 +35,7 @@ export default function DashboardPage() {
         </GridItem>
 
         {/* Birthday on the bottom right */}
-        <GridItem colSpan={{ base: 1, md: 2 }} display="flex" justifyContent="flex-start" alignItems="flex-start" mt={6}>
+        <GridItem colSpan={{ base: 1, md: 2 }}  mt={6}>
           <Birthday />
         </GridItem>
       </Grid>

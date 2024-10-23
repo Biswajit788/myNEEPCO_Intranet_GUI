@@ -1,4 +1,4 @@
-import { Box, Divider, Flex, Image, Text, useColorModeValue } from '@chakra-ui/react';
+import { Box, Divider, Flex, Image, Text, useColorModeValue, Grid } from '@chakra-ui/react';
 
 // Function to format the date with the current year
 const formatDateWithCurrentYear = (dateString: string) => {
@@ -61,9 +61,12 @@ const BirthdayList = ({ people }: { people: Person[] }) => {
     const cardBgColor = useColorModeValue('white', 'gray.700');
 
     return (
-        <Flex direction={{ base: 'column', md: 'column' }} gap={4}>
+        <Grid
+            templateColumns={{ base: '1fr', md: 'repeat(2, 1fr)' }} // 1 column on small screens, 2 on larger
+            gap={4}
+        >
             {/* Card for Today’s Birthdays */}
-            <Box flex="1" boxShadow="lg" borderRadius="md" p={4} bg={cardBgColor}>
+            <Box boxShadow="lg" borderRadius="md" p={4} bg={cardBgColor}>
                 <Text fontSize="lg" fontWeight="bold" mb={4}>
                     {peopleWithTodayBirthday.length} Birthday{peopleWithTodayBirthday.length !== 1 ? 's' : ''} today
                 </Text>
@@ -108,7 +111,7 @@ const BirthdayList = ({ people }: { people: Person[] }) => {
             </Box>
 
             {/* Card for Upcoming Birthdays This Month */}
-            <Box flex="1" boxShadow="lg" borderRadius="md" p={4} bg={cardBgColor}>
+            <Box boxShadow="lg" borderRadius="md" p={4} bg={cardBgColor}>
                 <Text fontSize="lg" fontWeight="bold" mb={4}>
                     Upcoming Birthday{upcomingBirthdaysThisMonth.length !== 1 ? 's' : ''} this month
                 </Text>
@@ -139,7 +142,7 @@ const BirthdayList = ({ people }: { people: Person[] }) => {
                     })
                 )}
             </Box>
-        </Flex>
+        </Grid>
     );
 };
 

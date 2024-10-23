@@ -46,12 +46,12 @@ const SocialButton = ({
 export default function SmallWithLogoLeft() {
   return (
     <Box
-      bg={useColorModeValue('gray.50', 'gray.900')}
+      bg={useColorModeValue('gray.200', 'gray.900')}
       color={useColorModeValue('gray.700', 'gray.200')}>
       <Container
         as={Stack}
         maxW={'6xl'}
-        py={4}
+        py={8}
         direction={{ base: 'column', md: 'row' }}
         spacing={4}
         justify={{ base: 'center', md: 'space-between' }}
