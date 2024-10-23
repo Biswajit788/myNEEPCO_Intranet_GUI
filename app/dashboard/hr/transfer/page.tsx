@@ -54,11 +54,17 @@ const LOADING_TIME_MS = 0;
 const MemoizedPagination = React.memo(Pagination);
 
 export default function PromotionPage() {
+
+    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || '';
     const [transferData, setTransferData] = useState<Transfer[]>([]);
     const [currentPage, setCurrentPage] = useState(1);
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
-    const [filteredData, setFilteredData] = useState<Transfer[]>([]);
+    const [searchText, setSearchText] = useState('');
+    const [orderNo, setOrderNo] = useState<string | null>(null);
+    const [orderDt, setOrderDt] = useState<string | null>(null);
+    const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+
 
     const bgColor = useColorModeValue('white', 'gray.900');
     const boxColor = useColorModeValue('gray.700', 'blue.900');
@@ -73,7 +79,6 @@ export default function PromotionPage() {
                 const response = await fetchTransfers();
                 if (response?.data) {
                     setTransferData(response.data as Transfer[]);
-                    setFilteredData(response.data as Transfer[]);
                 }
             } catch (error: any) {
                 if (error?.response?.status === 401 && error?.response?.data?.message === 'Unauthorized') {
@@ -90,25 +95,43 @@ export default function PromotionPage() {
         getTransfers();
     }, []);
 
-    const handleFilter = useCallback((orderNo: string, orderDt: string) => {
-        const filtered = transferData.filter((transfer) => {
-            const matchesOrderNo = orderNo
-                ? transfer.attributes.OrderNo.includes(orderNo)
-                : true;
-            const matchesOrderDt = orderDt
-                ? transfer.attributes.OrderDt === orderDt
-                : true;
+    // Memoized filtered and sorted data
+    const filteredData = useMemo(() => {
+        let data = [...transferData];
 
-            return matchesOrderNo && matchesOrderDt;
+        if (searchText) {
+            data = data.filter((transfer) => {
+                const orderNo = String(transfer.attributes.OrderNo).toLowerCase();
+                const description = String(transfer.attributes.Description).toLowerCase();
+
+                return (
+                    orderNo.includes(searchText.toLowerCase()) ||
+                    description.includes(searchText.toLowerCase())
+                );
+            });
+        }
+
+        // Apply filter by order number and date
+        if (orderNo) {
+            data = data.filter((transfer) =>
+                String(transfer.attributes.OrderNo).includes(orderNo)
+            );
+        }
+
+        if (orderDt) {
+            data = data.filter((transfer) => transfer.attributes.OrderDt === orderDt);
+        }
+
+        // Apply sorting by date
+        data.sort((a, b) => {
+            const dateA = new Date(a.attributes.OrderDt).getTime();
+            const dateB = new Date(b.attributes.OrderDt).getTime();
+
+            return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
         });
-        setFilteredData(filtered);
-        setCurrentPage(1); // Reset to the first page after filtering
-    }, [transferData]);
 
-    const handleReset = useCallback(() => {
-        setFilteredData(transferData);
-        setCurrentPage(1); // Reset to the first page after reset
-    }, [transferData]);
+        return data;
+    }, [transferData, searchText, orderNo, orderDt, sortOrder]);
 
     const paginatedData = useMemo(() => {
         return filteredData.slice(
@@ -116,6 +139,24 @@ export default function PromotionPage() {
             currentPage * ITEMS_PER_PAGE
         );
     }, [filteredData, currentPage]);
+
+    const handleSearch = useCallback((searchText: string) => {
+        setSearchText(searchText);
+        setCurrentPage(1);
+    }, []);
+
+    const handleFilter = useCallback((orderNo: string, orderDt: string) => {
+        setOrderNo(orderNo);
+        setOrderDt(orderDt);
+        setCurrentPage(1);
+    }, []);
+
+    const handleReset = useCallback(() => {
+        setSearchText('');
+        setOrderNo(null);
+        setOrderDt(null);
+        setCurrentPage(1);
+    }, []);
 
     const handlePageChange = useCallback((page: number) => {
         setCurrentPage(page);
@@ -125,6 +166,14 @@ export default function PromotionPage() {
         return Math.ceil(filteredData.length / ITEMS_PER_PAGE);
     }, [filteredData]);
 
+    // Total number of filtered records
+    const totalRecords = filteredData.length;
+
+    const handleSorting = useCallback((sortOrder: 'asc' | 'desc') => {
+        setSortOrder(sortOrder);
+        setCurrentPage(1);
+    }, []);
+
     const handleDownload = useCallback((fileUrl?: string) => {
         if (!fileUrl) {
             console.error('File URL is not defined');
@@ -132,7 +181,7 @@ export default function PromotionPage() {
             return;
         }
 
-        const fullUrl = `http://10.3.0.57:1337${fileUrl}`;
+        const fullUrl = `${baseUrl}${fileUrl}`;
         const newWindow = window.open('', '_blank', 'width=600,height=400');
 
         if (newWindow) {
@@ -157,7 +206,7 @@ export default function PromotionPage() {
             console.error('Failed to open new window');
             setError('Failed to open new window.');
         }
-    }, []);
+    }, [baseUrl]);
 
     const formatDateTime = useCallback((dateString?: string) => {
         if (!dateString) return 'Invalid date';
@@ -201,7 +250,12 @@ export default function PromotionPage() {
                 <Text textTransform="uppercase">Transfer and Posting as on date</Text>
             </Box>
 
-            <Filter onFilter={handleFilter} onReset={handleReset} />
+            {/* Filter Component */}
+            <Filter
+                onSearch={handleSearch}
+                onFilter={handleFilter}
+                onSortByDate={handleSorting}
+            />
 
             {loading ? (
                 <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={4}>
@@ -234,6 +288,10 @@ export default function PromotionPage() {
                         </Card>
                     ))}
                 </SimpleGrid>
+            ) : filteredData.length === 0 ? (
+                <Flex direction="column" align="center" justify="center" minH="50vh">
+                    <NoDataDisplay />
+                </Flex>
             ) : transferData.length === 0 ? (
                 <Flex
                     direction="column"
@@ -304,6 +362,7 @@ export default function PromotionPage() {
             <MemoizedPagination
                 currentPage={currentPage}
                 totalPages={totalPages}
+                totalRecords={totalRecords}
                 onPageChange={handlePageChange}
             />
         </Box>

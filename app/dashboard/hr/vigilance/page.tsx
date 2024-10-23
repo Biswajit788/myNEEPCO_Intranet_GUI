@@ -24,6 +24,7 @@ import {
 import { fetchVigilance } from '@/services/api';
 import Pagination from '@/components/Pagination';
 import NoDataDisplay from '@/components/NoDataDisplay';
+import Filter from '@/components/Filter';
 
 interface FileData {
     url: string;
@@ -57,11 +58,17 @@ const LOADING_TIME_MS = 0; // Time in milliseconds for skeleton display
 // Memoize the Pagination component to avoid unnecessary re-renders
 const MemoizedPagination = React.memo(Pagination);
 
-export default function PromotionPage() {
+export default function VigilancePage() {
+
+    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || '';
     const [vigilanceData, setVigilanceData] = useState<Vigilance[]>([]);
     const [currentPage, setCurrentPage] = useState(1);
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
+    const [searchText, setSearchText] = useState('');
+    const [orderNo, setOrderNo] = useState<string | null>(null);
+    const [orderDt, setOrderDt] = useState<string | null>(null);
+    const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
     const bgColor = useColorModeValue('white', 'gray.900');
     const boxColor = useColorModeValue('gray.700', 'blue.900');
@@ -92,22 +99,84 @@ export default function PromotionPage() {
         getVigilance();
     }, []);
 
-    // Memoize paginated data to avoid recalculating on each render
+    // Memoized filtered and sorted data
+    const filteredData = useMemo(() => {
+        let data = [...vigilanceData];
+
+        if (searchText) {
+            data = data.filter((vigilance) => {
+                const qtr = String(vigilance.attributes.Qtr).toLowerCase();
+                const year = String(vigilance.attributes.Year).toLowerCase();
+
+                return (
+                    qtr.includes(searchText.toLowerCase()) ||
+                    year.includes(searchText.toLowerCase())
+                );
+            });
+        }
+
+        // Apply filter by order number and date
+        /*  if (orderNo) {
+             data = data.filter((vigilance) =>
+                 String(vigilance.attributes.orderNo).includes(orderNo)
+             );
+         }
+ 
+         if (orderDt) {
+             data = data.filter((vigilance) => vigilance.attributes.Dated === orderDt);
+         }
+  */
+        // Apply sorting by date
+        data.sort((a, b) => {
+            const dateA = new Date(a.attributes.createdAt).getTime();
+            const dateB = new Date(b.attributes.createdAt).getTime();
+
+            return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
+        });
+
+        return data;
+    }, [vigilanceData, searchText, sortOrder]);
+
     const paginatedData = useMemo(() => {
-        return vigilanceData.slice(
+        return filteredData.slice(
             (currentPage - 1) * ITEMS_PER_PAGE,
             currentPage * ITEMS_PER_PAGE
         );
-    }, [vigilanceData, currentPage]);
+    }, [filteredData, currentPage]);
 
-    // Memoize the handlePageChange function to avoid re-creation on each render
+    const handleSearch = useCallback((searchText: string) => {
+        setSearchText(searchText);
+        setCurrentPage(1);
+    }, []);
+
+    const handleFilter = useCallback((orderNo: string, orderDt: string) => {
+        setOrderNo(orderNo);
+        setOrderDt(orderDt);
+        setCurrentPage(1);
+    }, []);
+
+    const handleReset = useCallback(() => {
+        setSearchText('');
+        setOrderNo(null);
+        setOrderDt(null);
+        setCurrentPage(1);
+    }, []);
+
     const handlePageChange = useCallback((page: number) => {
         setCurrentPage(page);
     }, []);
 
     const totalPages = useMemo(() => {
-        return Math.ceil(vigilanceData.length / ITEMS_PER_PAGE);
-    }, [vigilanceData]);
+        return Math.ceil(filteredData.length / ITEMS_PER_PAGE);
+    }, [filteredData]);
+
+    // Total number of filtered records
+    const totalRecords = filteredData.length;
+
+    const handleSorting = useCallback((sortOrder: 'asc' | 'desc') => {
+        setSortOrder(sortOrder);
+        setCurrentPage(1);
+    }, []);
 
     const handleDownload = useCallback((fileUrl: string | undefined) => {
         if (!fileUrl) {
@@ -115,9 +184,9 @@ export default function PromotionPage() {
             return;
         }
 
-        const fullUrl = `http://10.3.0.57:1337${fileUrl}`;
+        const fullUrl = `${baseUrl}${fileUrl}`;
         window.open(fullUrl, '_blank');
-    }, []);
+    }, [baseUrl]);
 
     const formatDateTime = useCallback((dateString?: string) => {
         if (!dateString) return 'Invalid date';
@@ -160,6 +229,13 @@ export default function PromotionPage() {
                 <Text textTransform={'uppercase'}>Vigilance Clearance Report as on date</Text>
             </Box>
 
+            {/* Filter Component */}
+            <Filter
+                onSearch={handleSearch}
+                onFilter={handleFilter}
+                onSortByDate={handleSorting}
+            />
+
             {loading ? (
                 <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={4}>
                     {[...Array(ITEMS_PER_PAGE)].map((_, index) => (
@@ -191,13 +267,8 @@ export default function PromotionPage() {
                         </Card>
                     ))}
                 </SimpleGrid>
-            ) : vigilanceData.length === 0 ? (
-                <Flex
-                    direction="column"
-                    align="center"
-                    justify="center"
-                    minH="60vh"
-                >
+            ) : filteredData.length === 0 ? (
+                <Flex direction="column" align="center" justify="center" minH="50vh">
                     <NoDataDisplay />
                 </Flex>
             ) : (
@@ -206,6 +277,7 @@ export default function PromotionPage() {
                         const attributes = vigilance.attributes;
                         const fileUrlReport = attributes.File1?.data?.attributes?.url;
                         const fileUrlList = attributes.File2?.data?.attributes?.url;
+                        
                         const createdAt = formatDateTime(attributes.createdAt);
 
                         return (
@@ -251,7 +323,7 @@ export default function PromotionPage() {
                                             </Heading>
                                             <Text
                                                 pt="2"
-                                                fontSize="sm"
+                                                fontSize="xs"
                                                 fontStyle="italic"
                                                 cursor={fileUrlList ? 'pointer' : 'not-allowed'}
                                                 onClick={() => fileUrlList && handleDownload(fileUrlList)}
@@ -276,6 +348,7 @@ export default function PromotionPage() {
             <MemoizedPagination
                 currentPage={currentPage}
                 totalPages={totalPages}
+                totalRecords={totalRecords}
                 onPageChange={handlePageChange}
             />
         </Box>

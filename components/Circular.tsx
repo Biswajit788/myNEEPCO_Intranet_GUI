@@ -12,10 +12,14 @@ import {
   Flex,
   keyframes,
   Spinner,
+  List,
+  ListItem,
+  Icon,
 } from '@chakra-ui/react';
 import NextLink from 'next/link';
-import { useRouter } from 'next/navigation'; 
+import { useRouter } from 'next/navigation';
 import { fetchCirculars } from '@/services/api';
+import { AttachmentIcon } from '@chakra-ui/icons'
 
 // Marquee animation keyframes
 const marquee = keyframes`
@@ -23,7 +27,6 @@ const marquee = keyframes`
   100% { transform: translateY(-100%); }
 `;
 
-// Define CircularData type
 interface CircularData {
   id: string;
   attributes: {
@@ -49,12 +52,14 @@ const isNew = (dateString: string) => {
 
 const Circular = () => {
   const [circulars, setCirculars] = useState<CircularData[]>([]);
-  const [loading, setLoading] = useState(false); // Loading state
+  const [loading, setLoading] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
 
   const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+  const titlebgcolor = useColorModeValue('gray.50', 'gray.900');
   const bgcolor = useColorModeValue('white', 'gray.900');
-  const textcolor = useColorModeValue('gray.900', 'white');
-  const router = useRouter(); // Use Next.js router
+  const textcolor = useColorModeValue('blue.700', 'white');
+  const router = useRouter();
 
   // Memoized version of getCirculars to avoid re-creating the function on every render
   const getCirculars = useCallback(async () => {
@@ -79,33 +84,40 @@ const Circular = () => {
 
   // Memoize the rendered circulars to prevent re-renders
   const renderedCirculars = useMemo(() => {
+    const openInSmallWindow = (url: string) => {
+      if (url !== '#') {
+        window.open(
+          url,
+          '_blank',
+          'width=600,height=400,scrollbars=yes,resizable=yes'
+        );
+      }
+    };
+
     return Array.isArray(circulars) && circulars.length > 0 ? (
-      circulars.map((circular) => (
-        <Box
-          key={circular.id}
-          py={2}
-          display="flex"
-          alignItems="center"
-          fontSize="12px"
-          fontWeight="medium"
-        >
-          <ChakraLink
-            as={NextLink}
-            href={`${baseUrl}${circular.attributes.File?.data?.attributes?.url || '#'}`}
-            isExternal
-            download
-            color={textcolor}
-            _hover={{ textDecoration: 'underline' }}
-          >
-            {circular.attributes.Title}
-          </ChakraLink>
-          {isNew(circular.attributes.CircularDt) && (
-            <Badge ml={2} colorScheme="green">
-              New
-            </Badge>
-          )}
-        </Box>
-      ))
+      <List spacing={3}>
+        {circulars.map((circular) => (
+          <ListItem key={circular.id} display="flex" alignItems="center" fontSize="13px">
+            <Icon as={AttachmentIcon} boxSize={3} mr={2} color={textcolor} />
+            <ChakraLink
+              as="button"
+              onClick={() => openInSmallWindow(`${baseUrl}${circular.attributes.File?.data?.attributes?.url || '#'}`)}
+              color={textcolor}
+              _hover={{ textDecoration: 'underline' }}
+              textAlign="left"
+            >
+              {circular.attributes.Title}
+            </ChakraLink>
+  
+            {/* New badge */}
+            {isNew(circular.attributes.CircularDt) && (
+              <Badge ml={2} colorScheme="green">
+                New
+              </Badge>
+            )}
+          </ListItem>
+        ))}
+      </List>
     ) : (
       <Box>No circulars available.</Box>
     );
@@ -117,29 +129,54 @@ const Circular = () => {
   };
 
   return (
-    <Box bg={bgcolor} p={4} rounded="md" shadow="md">
-      <Flex justifyContent="space-between" alignItems="center" mb={4}>
+    <>
+      <Flex
+        justifyContent="space-between"
+        alignItems="center"
+        bg={titlebgcolor}
+        p={2}
+        shadow="md"
+        borderTopRadius="md"
+      >
         <chakra.h3 fontSize="md" fontWeight="bold">
           Circular/Notices
         </chakra.h3>
-        {loading ? ( // Display spinner if loading
+        {loading ? (
           <Spinner size="sm" />
         ) : (
-          <Button size="sm" colorScheme="blue" onClick={handleSeeAllClick}>
+          <Button size="sm" variant="ghost" colorScheme="blue" onClick={handleSeeAllClick}>
             See All
           </Button>
         )}
       </Flex>
-      <Divider />
-      <Box overflow="hidden" position="relative" minH="200px">
-        <Flex
-          direction="column"
-          animation={`${marquee} 15s linear infinite`}
+
+      {/* Box content comes after the Flex */}
+      <Box
+        h="360px"
+        bg={bgcolor}
+        p={4}
+        shadow="md"
+        border="1px"
+        borderColor="gray.200"
+      >
+        <Box 
+          overflow="hidden" 
+          h="100%"
+          onMouseEnter={()=>{setIsHovered(true)}}
+          onMouseLeave={()=>{setIsHovered(false)}}
         >
-          {renderedCirculars}
-        </Flex>
+          <Flex
+            direction="column"
+            animation={`${marquee} 20s linear infinite`}
+            sx={{
+              animationPlayState: isHovered ? 'paused' : 'running',
+            }}
+          >
+            {renderedCirculars}
+          </Flex>
+        </Box>
       </Box>
-    </Box>
+    </>
   );
 }
 

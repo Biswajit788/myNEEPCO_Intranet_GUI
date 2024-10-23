@@ -41,6 +41,7 @@ interface PromotionAttributes {
     Dated: string;
     Remarks: string;
     createdAt: string;
+    Description: string;
     File?: FileAttributes;
 }
 
@@ -56,11 +57,15 @@ const LOADING_TIME_MS = 0; // Time in milliseconds
 const MemoizedPagination = React.memo(Pagination);
 
 export default function PromotionPage() {
+    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || '';
     const [promotionData, setPromotionData] = useState<Promotion[]>([]);
     const [currentPage, setCurrentPage] = useState(1);
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
-    const [filteredData, setFilteredData] = useState<Promotion[]>([]); // State for filtered data
+    const [searchText, setSearchText] = useState('');
+    const [orderNo, setOrderNo] = useState<string | null>(null);
+    const [orderDt, setOrderDt] = useState<string | null>(null);
+    const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
     const bgColor = useColorModeValue('white', 'gray.900');
     const boxColor = useColorModeValue('gray.700', 'blue.900');
@@ -75,7 +80,6 @@ export default function PromotionPage() {
                 const response = await fetchPromotions();
                 if (response?.data) {
                     setPromotionData(response.data as Promotion[]);
-                    setFilteredData(response.data as Promotion[]); // Initialize filteredData
                 }
             } catch (error: any) {
                 if (error?.response?.status === 401 && error?.response?.data?.message === 'Unauthorized') {
@@ -92,28 +96,46 @@ export default function PromotionPage() {
         getPromotions();
     }, []);
 
-    const handleFilter = useCallback((orderNo: string, orderDt: string) => {
-        const filtered = promotionData.filter((promotion) => {
-            const promotionOrderNo = String(promotion.attributes.OrderNo);
-            const matchesOrderNo = orderNo
-                ? promotionOrderNo.includes(orderNo)
-                : true;
-            const matchesOrderDt = orderDt
-                ? promotion.attributes.Dated === orderDt
-                : true;
+    // Memoized filtered and sorted data
+    const filteredData = useMemo(() => {
+        let data = [...promotionData];
 
-            return matchesOrderNo && matchesOrderDt;
+        if (searchText) {
+            data = data.filter((promotion) => {
+                const orderNo = String(promotion.attributes.OrderNo).toLowerCase();
+                const description = String(promotion.attributes.Description).toLowerCase();
+                const grade = String(promotion.attributes.Grade).toLowerCase();
+
+                return (
+                    orderNo.includes(searchText.toLowerCase()) ||
+                    description.includes(searchText.toLowerCase()) ||
+                    grade.includes(searchText.toLowerCase())
+                );
+            });
+        }
+
+        // Apply filter by order number and date
+        if (orderNo) {
+            data = data.filter((promotion) =>
+                String(promotion.attributes.OrderNo).includes(orderNo)
+            );
+        }
+
+        if (orderDt) {
+            data = data.filter((promotion) => promotion.attributes.Dated === orderDt);
+        }
+
+        // Apply sorting by date
+        data.sort((a, b) => {
+            const dateA = new Date(a.attributes.Dated).getTime();
+            const dateB = new Date(b.attributes.Dated).getTime();
+
+            return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
         });
-        setFilteredData(filtered);
-        setCurrentPage(1); // Reset to the first page after filtering
-    }, [promotionData]);
 
-    const handleReset = useCallback(() => {
-        setFilteredData(promotionData);
-        setCurrentPage(1); // Reset to the first page after reset
-    }, [promotionData]);
+        return data;
+    }, [promotionData, searchText, orderNo, orderDt, sortOrder]);
 
-    // Memoize paginated data to avoid recalculating on each render
     const paginatedData = useMemo(() => {
         return filteredData.slice(
             (currentPage - 1) * ITEMS_PER_PAGE,
@@ -121,7 +143,24 @@ export default function PromotionPage() {
         );
     }, [filteredData, currentPage]);
 
-    // Memoize the handlePageChange function to avoid re-creation on each render
+    const handleSearch = useCallback((searchText: string) => {
+        setSearchText(searchText);
+        setCurrentPage(1); 
+    }, []);
+
+    const handleFilter = useCallback((orderNo: string, orderDt: string) => {
+        setOrderNo(orderNo);
+        setOrderDt(orderDt);
+        setCurrentPage(1); 
+    }, []);
+
+    const handleReset = useCallback(() => {
+        setSearchText('');
+        setOrderNo(null);
+        setOrderDt(null);
+        setCurrentPage(1);
+    }, []);
+
     const handlePageChange = useCallback((page: number) => {
         setCurrentPage(page);
     }, []);
@@ -130,6 +169,35 @@ export default function PromotionPage() {
         return Math.ceil(filteredData.length / ITEMS_PER_PAGE);
     }, [filteredData]);
 
+    // Total number of filtered records
+     const totalRecords = filteredData.length;
+
+    const handleSorting = useCallback((sortOrder: 'asc' | 'desc') => {
+        setSortOrder(sortOrder);
+        setCurrentPage(1);
+    }, []);
+
+    const formatDateTime = useCallback((dateString?: string) => {
+        if (!dateString) return 'Invalid date';
+
+        const options: Intl.DateTimeFormatOptions = {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false,
+        };
+
+        try {
+            return new Date(dateString).toLocaleString(undefined, options);
+        } catch (error) {
+            console.error('Error formatting date:', error);
+            return 'Invalid date';
+        }
+    }, []);
+
     const handleDownload = useCallback((fileUrl?: string) => {
         if (!fileUrl) {
             console.error('File URL is not defined');
@@ -137,7 +205,7 @@ export default function PromotionPage() {
             return;
         }
 
-        const fullUrl = `http://10.3.0.57:1337${fileUrl}`;
+        const fullUrl = `${baseUrl}${fileUrl}`;
         const newWindow = window.open('', '_blank', 'width=600,height=400');
 
         if (newWindow) {
@@ -162,28 +230,7 @@ export default function PromotionPage() {
             console.error('Failed to open new window');
             setError('Failed to open new window.');
         }
-    }, []);
-
-    const formatDateTime = useCallback((dateString?: string) => {
-        if (!dateString) return 'Invalid date';
-
-        const options: Intl.DateTimeFormatOptions = {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit',
-            hour12: false,
-        };
-
-        try {
-            return new Date(dateString).toLocaleString(undefined, options);
-        } catch (error) {
-            console.error('Error formatting date:', error);
-            return 'Invalid date';
-        }
-    }, []);
+    }, [baseUrl]);
 
     return (
         <Box minH="100vh" bg={bgColor} p={2}>
@@ -208,7 +255,11 @@ export default function PromotionPage() {
             </Box>
 
             {/* Filter Component */}
-            <Filter onFilter={handleFilter} onReset={handleReset} />
+            <Filter
+                onSearch={handleSearch}
+                onFilter={handleFilter}
+                onSortByDate={handleSorting}
+            />
 
             {loading ? (
                 <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={4}>
@@ -241,6 +292,10 @@ export default function PromotionPage() {
                         </Card>
                     ))}
                 </SimpleGrid>
+            ) : filteredData.length === 0 ? (
+                <Flex direction="column" align="center" justify="center" minH="50vh">
+                    <NoDataDisplay />
+                </Flex>
             ) : promotionData.length === 0 ? (
                 <Flex
                     direction="column"
@@ -315,6 +370,7 @@ export default function PromotionPage() {
             <MemoizedPagination
                 currentPage={currentPage}
                 totalPages={totalPages}
+                totalRecords={totalRecords}
                 onPageChange={handlePageChange}
             />
         </Box>

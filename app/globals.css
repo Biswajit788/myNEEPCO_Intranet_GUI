@@ -1,10 +1,44 @@
 /* globals.css */
 body {
-  font-family: 'Roboto', sans-serif !important;
+  font-family: 'Roboto', 'Helvetica Neue', sans-serif !important;
 }
 
 h1, h2, h3, h4, h5, h6 {
-  font-family: 'Roboto', sans-serif !important;
+  font-family: 'Roboto', 'Helvetica Neue', sans-serif !important;
 }
+
+.sidebar {
+  font-family: 'Roboto', 'Helvetica Neue', sans-serif !important;
+}
+
+/* Custom Scrollbar for WebKit browsers */
+.custom-scrollbar {
+  overflow-y: auto; /* Ensure overflow is enabled */
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px; /* Width of the scrollbar */
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1); /* Background color of the track */
+  border-radius: 10px; /* Rounded corners for the track */
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.4); /* Color of the scrollbar thumb */
+  border-radius: 10px; /* Rounded corners for the thumb */
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.6); /* Darker color on hover */
+}
+
+/* Firefox scrollbar customization */
+.custom-scrollbar {
+  scrollbar-width: thin; /* Makes the scrollbar thinner */
+  scrollbar-color: rgba(0, 0, 0, 0.4) rgba(0, 0, 0, 0.1); /* thumb color and track color */
+}
+
 
   

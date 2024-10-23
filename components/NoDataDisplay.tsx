@@ -6,10 +6,11 @@ export default function NoDataDisplay() {
     return (
         <Box>
             <Image
-                src="/NoContent.png"
+                src="/delete.png"
                 alt="No data"
                 width={100}
                 height={100}
+                style={{ opacity: 0.2 }}
             />
             <Text fontSize="sm" mt={4} fontStyle={'italic'} fontWeight={'lighter'}>
                 No data to display

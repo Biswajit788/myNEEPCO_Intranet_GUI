@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import {
     Box,
     chakra,
@@ -44,12 +44,12 @@ interface FormData {
 
 const FormPage = () => {
     const [forms, setForms] = useState<FormData[]>([]);
-    const [filteredForms, setFilteredForms] = useState<FormData[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
     const [currentPage, setCurrentPage] = useState<number>(1);
     const [totalPages, setTotalPages] = useState<number>(1);
     const [searchTerm, setSearchTerm] = useState<string>('');
+    const [totalRecords, setTotalRecords] = useState<number>(0);
 
     const itemsPerPage = 10; // Number of items per page
 
@@ -65,7 +65,7 @@ const FormPage = () => {
                 const data = await fetchForms();
                 const formsData = data.data || [];
                 setForms(formsData);
-                setFilteredForms(formsData);
+                setTotalRecords(formsData.length);
                 setTotalPages(Math.ceil(formsData.length / itemsPerPage));
             } catch (error) {
                 setError('Failed to load forms & application');
@@ -77,17 +77,51 @@ const FormPage = () => {
         getForms();
     }, []);
 
-    useEffect(() => {
+    const filteredForms = useMemo(() => {
         const filtered = forms.filter(form =>
             form.attributes.Title.toLowerCase().includes(searchTerm.toLowerCase())
         );
-        setFilteredForms(filtered);
+        setTotalRecords(filtered.length);
         setTotalPages(Math.ceil(filtered.length / itemsPerPage));
-        setCurrentPage(1); // Reset to first page on search
+        return filtered;
     }, [searchTerm, forms]);
 
-    if (error) return <Box color="red.500">{error}</Box>;
+    // Function to handle download
+    const handleDownload = useCallback((fileUrl?: string) => {
+        if (!fileUrl) {
+            console.error('File URL is not defined');
+            setError('File URL is not defined.');
+            return;
+        }
 
+        const fullUrl = `${baseUrl}${fileUrl}`;
+        const newWindow = window.open('', '_blank', 'width=600,height=500');
+
+        if (newWindow) {
+            newWindow.document.write(`
+                <html>
+                    <head>
+                        <title>Downloading...</title>
+                    </head>
+                    <body>
+                        <p>Your download should start automatically. If it does not, <a href="${fullUrl}" download>click here</a>.</p>
+                        <script>
+                            window.onload = function() {
+                                window.location.href = "${fullUrl}";
+                            };
+                        </script>
+                    </body>
+                </html>
+            `);
+
+            newWindow.document.close();
+        } else {
+            console.error('Failed to open new window');
+            setError('Failed to open new window.');
+        }
+    }, [baseUrl]);
+
+    if (error) return <Box color="red.500">{error}</Box>;
     return (
         <Box bg={bgcolor} p={4} rounded="md" shadow="md">
             <Box
@@ -96,7 +130,7 @@ const FormPage = () => {
                 bg={boxColor}
                 color={textColor}
                 borderRadius="sm"
-                textAlign="right"
+                textAlign="left"
             >
                 <Text textTransform={'uppercase'}>
                     Forms & Application
@@ -136,7 +170,7 @@ const FormPage = () => {
                 </Box>
             ) : (
                 <TableContainer>
-                    <Table variant={tableVariant} size="sm">
+                    <Table variant={tableVariant} size="sm" borderWidth="1px">
                         <Thead>
                             <Tr>
                                 <Th p={2}>Serial No</Th>
@@ -154,10 +188,7 @@ const FormPage = () => {
                                         <Td p={2}>
                                             <Tooltip label="Download" aria-label="Download">
                                                 <IconButton
-                                                    as={NextLink}
-                                                    href={`${baseUrl}${form.attributes.File?.data?.attributes?.url || '#'}`}
-                                                    target="_blank"
-                                                    download
+                                                    onClick={() => handleDownload(form.attributes.File?.data?.attributes?.url)}
                                                     icon={<DownloadIcon />}
                                                     colorScheme="blue"
                                                     size="sm"
@@ -174,6 +205,7 @@ const FormPage = () => {
             <Pagination
                 currentPage={currentPage}
                 totalPages={totalPages}
+                totalRecords={totalRecords}
                 onPageChange={setCurrentPage}
             />
         </Box>
