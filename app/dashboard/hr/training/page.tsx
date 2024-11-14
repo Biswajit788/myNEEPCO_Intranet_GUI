@@ -26,6 +26,7 @@ import {
 } from '@chakra-ui/react';
 import { fetchTraining } from '@/services/api';
 import { DownloadIcon } from '@chakra-ui/icons';
+import LastUpdated from '@/components/LastUpdated';
 import Pagination from '@/components/Pagination';
 import NoDataDisplay from '@/components/NoDataDisplay';
 import Filter from '@/components/Filter';
@@ -71,6 +72,7 @@ export default function TrainingPage() {
     const [orderNo, setOrderNo] = useState<string | null>(null);
     const [orderDt, setOrderDt] = useState<string | null>(null);
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+    const [lastUpdated, setLastUpdated] = useState<string | null>(null);
 
     const bgColor = useColorModeValue('white', 'gray.900');
     const boxColor = useColorModeValue('gray.700', 'blue.900');
@@ -81,11 +83,29 @@ export default function TrainingPage() {
 
     useEffect(() => {
         const getTraining = async () => {
+            let page = 1;
+            const pageSize = 1000;
+            let allTrainings: Training[] = [];
+            setLoading(true);
+
             try {
-                const response = await fetchTraining();
-                if (response?.data) {
-                    setTrainingData(response.data as Training[]);
+                while (true) {
+                    const response = await fetchTraining(page, pageSize);
+                    if (response?.data?.length === 0) {
+                        break;
+                    }
+                    allTrainings = [...allTrainings, ...response.data]
+                    page += 1;
                 }
+
+                setTrainingData(allTrainings);
+
+                // Get the most recent createdAt date for last updated display
+                if (allTrainings.length > 0) {
+                    const lastUpdatedDate = allTrainings[0]?.attributes?.createdAt;
+                    setLastUpdated(lastUpdatedDate);
+                }
+
             } catch (error: any) {
                 if (error?.response?.status === 401 && error?.response?.data?.message === 'Unauthorized') {
                     setError('You are not authorized to view this page');
@@ -135,7 +155,7 @@ export default function TrainingPage() {
             const dateA = new Date(a.attributes.OrderDt).getTime();
             const dateB = new Date(b.attributes.OrderDt).getTime();
 
-            return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
+            return sortOrder === 'desc' ? dateA - dateB : dateB - dateA;
         });
 
         return data;
@@ -174,10 +194,10 @@ export default function TrainingPage() {
         return Math.ceil(filteredData.length / ITEMS_PER_PAGE);
     }, [filteredData]);
 
-     // Total number of filtered records
-     const totalRecords = filteredData.length;
+    // Total number of filtered records
+    const totalRecords = filteredData.length;
 
-    const handleSorting = useCallback((sortOrder: 'asc' | 'desc') => {
+    const handleSorting = useCallback((sortOrder: 'desc' | 'asc') => {
         setSortOrder(sortOrder);
         setCurrentPage(1);
     }, []);
@@ -264,6 +284,9 @@ export default function TrainingPage() {
                 onSortByDate={handleSorting}
             />
 
+            {/* Display Last Updated Date */}
+            <LastUpdated lastUpdated={lastUpdated} />
+
             {loading ? (
                 <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={4}>
                     {[...Array(ITEMS_PER_PAGE)].map((_, index) => (
@@ -344,7 +367,6 @@ export default function TrainingPage() {
                                         <Text fontSize="xs">
                                             <span style={{ marginRight: '6px', fontWeight: 'bold', fontSize: '14px' }}>Topic:</span>{attributes.Title}
                                         </Text>
-                                        <Divider />
                                         <Text fontSize="xs">
                                             <span style={{ marginRight: '6px', fontWeight: 'bold', fontSize: '14px' }}>Training Date:</span>{attributes.TDate}
                                         </Text>
@@ -363,7 +385,7 @@ export default function TrainingPage() {
                                             />
                                         </Tooltip>
                                     )}
-                                    <Text fontSize="x-small" color="gray.500" textAlign="right" w="100%">
+                                    <Text fontSize="xs" color="gray.500" textAlign="right" w="100%">
                                         Published on: <Text as="span" display="block">{createdAt}</Text>
                                     </Text>
                                 </CardFooter>

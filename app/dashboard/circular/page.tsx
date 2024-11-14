@@ -24,6 +24,7 @@ import {
     Text,
 } from '@chakra-ui/react';
 import { DownloadIcon, SearchIcon } from '@chakra-ui/icons';
+import LastUpdated from '@/components/LastUpdated';
 import Pagination from '@/components/Pagination';
 import { fetchCirculars } from '@/services/api';
 
@@ -39,8 +40,8 @@ interface CircularData {
                 };
             };
         };
+        createdAt: string;
     };
-    createdAt: string;
 }
 
 const CircularPage = () => {
@@ -62,16 +63,30 @@ const CircularPage = () => {
 
     useEffect(() => {
         const loadCirculars = async () => {
+            let page = 1;
+            const pageSize = 1000;
+            let allCirculars: CircularData[] = [];
+            setLoading(true);
+
             try {
-                const data = await fetchCirculars();
-                const circularsData = data.data || [];
-                setCirculars(circularsData);
-                setTotalRecords(circularsData.length);
-                setTotalPages(Math.ceil(circularsData.length / itemsPerPage));
+                while(true) {
+                    const response = await fetchCirculars(page, pageSize);
+
+                    if(response?.data?.length === 0) {
+                        break;
+                    }
+
+                    allCirculars = [...allCirculars, ...response.data];
+                    page += 1;
+                }
+               
+                setCirculars(allCirculars);
+                setTotalRecords(allCirculars.length);
+                setTotalPages(Math.ceil(allCirculars.length / itemsPerPage));
 
                 // Get the most recent createdAt date for last updated display
-                if (circularsData.length > 0) {
-                    const lastUpdatedDate = circularsData[0]?.attributes?.createdAt;
+                if (allCirculars.length > 0) {
+                    const lastUpdatedDate = allCirculars[0]?.attributes?.createdAt;
                     setLastUpdated(lastUpdatedDate);
                 }
             } catch (error: any) {
@@ -162,14 +177,10 @@ const CircularPage = () => {
                     </InputGroup>
                 </Box>
             </Box>
+            
             {/* Display Last Updated Date */}
-            <Box textAlign="right" fontSize="sm" fontStyle={'italic'} mb={2}>
-                {lastUpdated && (
-                    <Text color="gray.400">
-                        Last Updated On: &nbsp;{new Date(lastUpdated).toLocaleDateString()}
-                    </Text>
-                )}
-            </Box>
+            <LastUpdated lastUpdated={lastUpdated}/>
+
             {loading ? (
                 <Box>
                     <Skeleton height="40px" mb={4} />

@@ -23,6 +23,7 @@ import {
 } from '@chakra-ui/react';
 import { fetchScaleBenefit } from '@/services/api';
 import { DownloadIcon } from '@chakra-ui/icons';
+import LastUpdated from '@/components/LastUpdated';
 import Pagination from '@/components/Pagination';
 import NoDataDisplay from '@/components/NoDataDisplay';
 import Filter from '@/components/Filter';
@@ -68,6 +69,7 @@ export default function ScaleBenefitPage() {
     const [orderNo, setOrderNo] = useState<string | null>(null);
     const [orderDt, setOrderDt] = useState<string | null>(null);
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+    const [lastUpdated, setLastUpdated] = useState<string | null>(null);
 
     const bgColor = useColorModeValue('white', 'gray.900');
     const boxColor = useColorModeValue('gray.700', 'blue.900');
@@ -78,11 +80,29 @@ export default function ScaleBenefitPage() {
 
     useEffect(() => {
         const getScaleBenefits = async () => {
+            let page = 1;
+            const pageSize = 1000;
+            let allScaleBenefits: ScaleBenefit[] = [];
+            setLoading(true);
+
             try {
-                const response = await fetchScaleBenefit();
-                if (response?.data) {
-                    setScaleBenefitdata(response.data as ScaleBenefit[]);
+                while (true) {
+                    const response = await fetchScaleBenefit(page, pageSize);
+                    if (response?.data?.length === 0) {
+                        break;
+                    }
+                    allScaleBenefits = [...allScaleBenefits, ...response.data];
+                    page += 1;
                 }
+
+                setScaleBenefitdata(allScaleBenefits);
+
+                // Get the most recent createdAt date for last updated display
+                if (allScaleBenefits.length > 0) {
+                    const lastUpdatedDate = allScaleBenefits[0]?.attributes?.createdAt;
+                    setLastUpdated(lastUpdatedDate);
+                }
+
             } catch (error: any) {
                 if (error?.response?.status === 401 && error?.response?.data?.message === 'Unauthorized') {
                     setError('You are not authorized to view this page');
@@ -132,7 +152,7 @@ export default function ScaleBenefitPage() {
             const dateA = new Date(a.attributes.OrderDt).getTime();
             const dateB = new Date(b.attributes.OrderDt).getTime();
 
-            return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
+            return sortOrder === 'desc' ? dateA - dateB : dateB - dateA;
         });
 
         return data;
@@ -171,10 +191,10 @@ export default function ScaleBenefitPage() {
         return Math.ceil(filteredData.length / ITEMS_PER_PAGE);
     }, [filteredData]);
 
-     // Total number of filtered records
-     const totalRecords = filteredData.length;
+    // Total number of filtered records
+    const totalRecords = filteredData.length;
 
-    const handleSorting = useCallback((sortOrder: 'asc' | 'desc') => {
+    const handleSorting = useCallback((sortOrder: 'desc' | 'asc') => {
         setSortOrder(sortOrder);
         setCurrentPage(1);
     }, []);
@@ -260,6 +280,9 @@ export default function ScaleBenefitPage() {
                 onFilter={handleFilter}
                 onSortByDate={handleSorting}
             />
+
+            {/* Display Last Updated Date */}
+            <LastUpdated lastUpdated={lastUpdated} />
 
             {loading ? (
                 <SimpleGrid columns={{ base: 1, md: 1, lg: 3 }} spacing={4}>

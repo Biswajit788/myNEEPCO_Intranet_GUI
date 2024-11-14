@@ -28,6 +28,7 @@ import {
 import { DownloadIcon, SearchIcon } from '@chakra-ui/icons';
 import NextLink from 'next/link';
 import { fetchUpdates } from '@/services/api';
+import LastUpdated from '@/components/LastUpdated';
 import Pagination from '@/components/Pagination';
 
 interface UpdateData {
@@ -42,8 +43,8 @@ interface UpdateData {
                 };
             };
         };
+        createdAt: string;
     };
-    createdAt: string;
 }
 
 const UpdatePage = () => {
@@ -65,16 +66,29 @@ const UpdatePage = () => {
 
     useEffect(() => {
         const loadUpdates = async () => {
+            let page = 1;
+            const pageSize = 1000;
+            let allUpdates: UpdateData[] = [];
+            setLoading(true);
+
             try {
-                const data = await fetchUpdates();
-                const updatesData = data.data || [];
-                setUpdates(updatesData);
-                setTotalRecords(updatesData.length);
-                setTotalPages(Math.ceil(updatesData.length / itemsPerPage));
+                while(true) {
+                    const response = await fetchUpdates(page, pageSize);
+
+                    if(response?.data?.length === 0) {
+                        break;
+                    }
+                    allUpdates = [...allUpdates, ...response.data];
+                    page += 1;
+                }
+               
+                setUpdates(allUpdates);
+                setTotalRecords(allUpdates.length);
+                setTotalPages(Math.ceil(allUpdates.length / itemsPerPage));
 
                 // Get the most recent createdAt date for last updated display
-                if (updatesData.length > 0) {
-                    const lastUpdatedDate = updatesData[0]?.attributes?.createdAt;
+                if (allUpdates.length > 0) {
+                    const lastUpdatedDate = allUpdates[0]?.attributes?.createdAt;
                     setLastUpdated(lastUpdatedDate);
                 }
             } catch (error: any) {
@@ -162,21 +176,17 @@ const UpdatePage = () => {
                             <SearchIcon color="gray.300" />
                         </InputLeftElement>
                         <Input
-                            placeholder="Search Circulars"
+                            placeholder="Search Updates"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </InputGroup>
                 </Box>
             </Box>
+
             {/* Display Last Updated Date */}
-            <Box textAlign="right" fontSize="sm" fontStyle={'italic'} mb={2}>
-                {lastUpdated && (
-                    <Text color="gray.400">
-                        Last Updated On: &nbsp;{new Date(lastUpdated).toLocaleDateString()}
-                    </Text>
-                )}
-            </Box>
+            <LastUpdated lastUpdated={lastUpdated}/>
+
             {loading ? (
                 <Box>
                     <Skeleton height="40px" mb={4} />

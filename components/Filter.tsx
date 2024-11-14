@@ -26,18 +26,20 @@ import { FiSearch, FiFilter, FiGrid, FiList, FiArrowDown, FiArrowUp } from 'reac
 interface FilterProps {
     onSearch: (searchText: string) => void;
     onFilter: (orderNo: string, orderDt: string) => void;
-    onSortByDate: (sortOrder: 'asc' | 'desc') => void;
+    onSortByDate: (sortOrder: 'desc' | 'asc') => void;
 }
 
 const Filter: React.FC<FilterProps> = ({ onSearch, onFilter, onSortByDate }) => {
     const { colorMode } = useColorMode();
+
     const [searchText, setSearchText] = useState('');
     const [orderNo, setOrderNo] = useState('');
     const [orderDt, setOrderDt] = useState('');
-
-    const [openPopover, setOpenPopover] = useState<'filter' | null>(null);
+    
+    const [openPopover, setOpenPopover] = useState(null as 'filter' | null);
     const [viewMode, setViewMode] = useState<'list' | 'grid'>('grid');
-    const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+    const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+    
 
     const handleSearch = useCallback(
         (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -68,10 +70,10 @@ const Filter: React.FC<FilterProps> = ({ onSearch, onFilter, onSortByDate }) => 
     };
 
     const handleSortToggle = () => {
-        const newSortOrder = sortOrder === 'asc' ? 'desc' : 'asc';
+        const newSortOrder = sortOrder === 'desc' ? 'asc' : 'desc';
         setSortOrder(newSortOrder);
-        onSortByDate(newSortOrder);
-    };
+        onSortByDate(newSortOrder); 
+    };    
 
     return (
         <Flex
@@ -120,11 +122,11 @@ const Filter: React.FC<FilterProps> = ({ onSearch, onFilter, onSortByDate }) => 
                 width={{ base: '100%', md: 'auto' }} // Full width buttons on mobile
             >
                 {/* Sort by Date Button */}
-                <Tooltip label={`Sort by ${sortOrder === 'asc' ? 'Descending' : 'Ascending'}`} aria-label="Sort Tooltip">
+                <Tooltip label={`Sort by ${sortOrder === 'asc' ? 'Ascending' : 'Descending'}`} aria-label="Sort Tooltip">
                     <Button
                         onClick={handleSortToggle}
                         size="sm"
-                        leftIcon={sortOrder === 'asc' ? <FiArrowUp /> : <FiArrowDown />}
+                        leftIcon={sortOrder === 'asc' ? <FiArrowUp /> : <FiArrowDown />} // Swap the icons here
                         variant={sortOrder === 'asc' ? 'solid' : 'outline'}
                         fontWeight="normal"
                         width={{ base: '100%', md: 'auto' }} // Full width on small screens
