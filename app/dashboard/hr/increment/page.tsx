@@ -22,6 +22,7 @@ import {
 } from '@chakra-ui/react';
 import { fetchIncrement } from '@/services/api';
 import { DownloadIcon } from '@chakra-ui/icons';
+import LastUpdated from '@/components/LastUpdated';
 import Pagination from '@/components/Pagination';
 import NoDataDisplay from '@/components/NoDataDisplay';
 import Filter from '@/components/Filter';
@@ -66,6 +67,7 @@ export default function IncrementPage() {
     const [orderNo, setOrderNo] = useState('');
     const [orderDt, setOrderDt] = useState('');
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+    const [lastUpdated, setLastUpdated] = useState<string | null>(null);
 
     const bgColor = useColorModeValue('white', 'gray.900');
     const boxColor = useColorModeValue('gray.700', 'blue.900');
@@ -76,11 +78,29 @@ export default function IncrementPage() {
 
     useEffect(() => {
         const getIncrements = async () => {
+            let page = 1;
+            const pageSize = 1000;
+            let allIncrements: Increment[] = [];
+            setLoading(true);
+
             try {
-                const response = await fetchIncrement();
-                if (response?.data) {
-                    setIncrementData(response.data as Increment[]);
+                while (true) {
+                    const response = await fetchIncrement(page, pageSize);
+                    if (response?.data?.length === 0) {
+                        break;
+                    }
+                    allIncrements = [...allIncrements, ...response.data];
+                    page += 1;
                 }
+
+                setIncrementData(allIncrements);
+
+                // Get the most recent createdAt date for last updated display
+                if (allIncrements.length > 0) {
+                    const lastUpdatedDate = allIncrements[0]?.attributes?.createdAt;
+                    setLastUpdated(lastUpdatedDate);
+                }
+
             } catch (error: any) {
                 if (error?.response?.status === 401 && error?.response?.data?.message === 'Unauthorized') {
                     setError('You are not authorized to view this page');
@@ -186,7 +206,7 @@ export default function IncrementPage() {
             const dateA = new Date(a.attributes.OrderDt).getTime();
             const dateB = new Date(b.attributes.OrderDt).getTime();
 
-            return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
+            return sortOrder === 'desc' ? dateA - dateB : dateB - dateA;
         });
 
         return data;
@@ -218,7 +238,7 @@ export default function IncrementPage() {
         setCurrentPage(1);
     }, []);
 
-    const handleSorting = useCallback((sortOrder: 'asc' | 'desc') => {
+    const handleSorting = useCallback((sortOrder: 'desc' | 'asc') => {
         setSortOrder(sortOrder);
     }, []);
 
@@ -241,6 +261,9 @@ export default function IncrementPage() {
             </Box>
 
             <Filter onSearch={handleSearch} onFilter={handleFilter} onSortByDate={handleSorting} />
+
+            {/* Display Last Updated Date */}
+            <LastUpdated lastUpdated={lastUpdated} />
 
             {loading ? (
                 <SimpleGrid columns={{ base: 1, md: 1, lg: 3 }} spacing={4}>

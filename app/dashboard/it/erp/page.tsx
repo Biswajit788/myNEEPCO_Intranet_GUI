@@ -31,6 +31,7 @@ import {
 } from '@chakra-ui/react';
 import { DownloadIcon, SearchIcon } from '@chakra-ui/icons';
 import { BsThreeDotsVertical } from 'react-icons/bs';
+import LastUpdated from '@/components/LastUpdated';
 import Pagination from '@/components/Pagination';
 import { fetchErpData } from '@/services/api';
 
@@ -70,16 +71,28 @@ const ErpPage = () => {
 
     useEffect(() => {
         const loadData = async () => {
+            let page = 1;
+            const pageSize = 1000;
+            let allData: ErpData[] = [];
+            setLoading(true);
+
             try {
-                const data = await fetchErpData();
-                const erpData = data.data || [];
-                setData(erpData);
-                setTotalRecords(erpData.length);
-                setTotalPages(Math.ceil(erpData.length / itemsPerPage));
+                while(true) {
+                    const response = await fetchErpData(page, pageSize);
+
+                    if(response?.data?.length === 0){
+                        break;
+                    }
+                    allData = [...allData, ...response.data];
+                    page += 1;
+                }
+                setData(allData);
+                setTotalRecords(allData.length);
+                setTotalPages(Math.ceil(allData.length / itemsPerPage));
 
                 // Get the most recent createdAt date for last updated display
-                if (erpData.length > 0) {
-                    const lastUpdatedDate = erpData[0]?.attributes?.createdAt;
+                if (allData.length > 0) {
+                    const lastUpdatedDate = allData[0]?.attributes?.createdAt;
                     setLastUpdated(lastUpdatedDate);
                 }
             } catch (error: any) {
@@ -177,13 +190,8 @@ const ErpPage = () => {
                 </Box>
             </Box>
             {/* Display Last Updated Date */}
-            <Box textAlign="right" fontSize="sm" fontStyle={'italic'} mb={2}>
-                {lastUpdated && (
-                    <Text color="gray.400">
-                        Last Updated On: &nbsp;{new Date(lastUpdated).toLocaleDateString()}
-                    </Text>
-                )}
-            </Box>
+           <LastUpdated lastUpdated={lastUpdated}/>
+
             {loading ? (
                 <Box>
                     <Skeleton height="40px" mb={4} />

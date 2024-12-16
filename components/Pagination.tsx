@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, HStack, Text, IconButton } from '@chakra-ui/react';
+import { Button, HStack, Text, IconButton, useColorModeValue } from '@chakra-ui/react';
 import { ChevronLeftIcon, ChevronRightIcon, ArrowLeftIcon, ArrowRightIcon } from '@chakra-ui/icons';
 
 interface PaginationProps {
@@ -10,11 +10,15 @@ interface PaginationProps {
 }
 
 const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages, totalRecords, onPageChange }) => {
+  // Define colors for dark and light mode
+  const textColor = useColorModeValue('gray.700', 'gray.300');
+  const buttonBorderColor = useColorModeValue('gray.300', 'gray.600');
+
   return (
     <HStack spacing={4} justify="space-between" mt={8}>
       {/* Left side showing total number of records */}
-      <Text fontSize="sm" color="gray.700" fontStyle={'italic'} fontWeight={'bold'}>
-        Total Records: {totalRecords}
+      <Text fontSize="sm" color={textColor} fontStyle="italic" fontWeight="bold">
+        Total Records: <span style={{fontSize: '16px'}}>{totalRecords}</span>
       </Text>
 
       {/* Pagination controls */}
@@ -27,6 +31,7 @@ const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages, totalR
           aria-label="First Page"
           size="sm"
           variant="outline"
+          borderColor={buttonBorderColor}
         />
 
         {/* Previous Page Button */}
@@ -34,12 +39,13 @@ const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages, totalR
           size="sm"
           onClick={() => onPageChange(currentPage - 1)}
           isDisabled={currentPage === 1}
-          leftIcon={<ChevronLeftIcon/>}
+          leftIcon={<ChevronLeftIcon />}
           variant="outline"
+          borderColor={buttonBorderColor}
         />
 
         {/* Current Page / Total Pages */}
-        <Text fontSize="sm">
+        <Text fontSize="sm" color={textColor}>
           Page {currentPage} / {totalPages}
         </Text>
 
@@ -50,6 +56,7 @@ const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages, totalR
           isDisabled={currentPage === totalPages}
           rightIcon={<ChevronRightIcon />}
           variant="outline"
+          borderColor={buttonBorderColor}
         />
 
         {/* Last Page Button */}
@@ -60,6 +67,7 @@ const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages, totalR
           aria-label="Last Page"
           size="sm"
           variant="outline"
+          borderColor={buttonBorderColor}
         />
       </HStack>
     </HStack>

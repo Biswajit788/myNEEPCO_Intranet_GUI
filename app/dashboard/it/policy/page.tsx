@@ -31,10 +31,11 @@ import {
 } from '@chakra-ui/react';
 import { DownloadIcon, SearchIcon } from '@chakra-ui/icons';
 import { BsThreeDotsVertical } from 'react-icons/bs';
+import LastUpdated from '@/components/LastUpdated';
 import Pagination from '@/components/Pagination';
 import { fetchITPolicyData } from '@/services/api';
 
-interface ErpData {
+interface ItPolicyData {
     id: string;
     attributes: {
         Title: string;
@@ -51,7 +52,7 @@ interface ErpData {
 }
 
 const ITPolicyPage = () => {
-    const [data, setData] = useState<ErpData[]>([]);
+    const [data, setData] = useState<ItPolicyData[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
     const [currentPage, setCurrentPage] = useState<number>(1);
@@ -70,16 +71,30 @@ const ITPolicyPage = () => {
 
     useEffect(() => {
         const loadData = async () => {
+            let page = 1;
+            const pageSize = 1000;
+            let allData: ItPolicyData[] = [];
+            setLoading(true);
+
             try {
-                const data = await fetchITPolicyData();
-                const itPolicyData = data.data || [];
-                setData(itPolicyData);
-                setTotalRecords(itPolicyData.length);
-                setTotalPages(Math.ceil(itPolicyData.length / itemsPerPage));
+                while(true) {
+                    const response = await fetchITPolicyData(page, pageSize);
+
+                    if(response?.data?.length === 0){
+                        break;
+                    }
+
+                    allData = [...allData, ...response.data];
+                    page += 1;
+                }
+
+                setData(allData);
+                setTotalRecords(allData.length);
+                setTotalPages(Math.ceil(allData.length / itemsPerPage));
 
                 // Get the most recent createdAt date for last updated display
-                if (itPolicyData.length > 0) {
-                    const lastUpdatedDate = itPolicyData[0]?.attributes?.createdAt;
+                if (allData.length > 0) {
+                    const lastUpdatedDate = allData[0]?.attributes?.createdAt;
                     setLastUpdated(lastUpdatedDate);
                 }
             } catch (error: any) {
@@ -177,13 +192,8 @@ const ITPolicyPage = () => {
                 </Box>
             </Box>
             {/* Display Last Updated Date */}
-            <Box textAlign="right" fontSize="sm" fontStyle={'italic'} mb={2}>
-                {lastUpdated && (
-                    <Text color="gray.400">
-                        Last Updated On: &nbsp;{new Date(lastUpdated).toLocaleDateString()}
-                    </Text>
-                )}
-            </Box>
+            <LastUpdated lastUpdated={lastUpdated}/>
+
             {loading ? (
                 <Box>
                     <Skeleton height="40px" mb={4} />

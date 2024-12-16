@@ -18,9 +18,11 @@ import {
     AlertDescription,
     Skeleton,
     SkeletonText,
+    Divider,
 } from '@chakra-ui/react';
 import { fetchTransfers } from '@/services/api';
 import { DownloadIcon } from '@chakra-ui/icons';
+import LastUpdated from '@/components/LastUpdated';
 import Pagination from '@/components/Pagination';
 import Filter from '@/components/Filter';
 import NoDataDisplay from '@/components/NoDataDisplay';
@@ -64,7 +66,7 @@ export default function PromotionPage() {
     const [orderNo, setOrderNo] = useState<string | null>(null);
     const [orderDt, setOrderDt] = useState<string | null>(null);
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
-
+    const [lastUpdated, setLastUpdated] = useState<string | null>(null);
 
     const bgColor = useColorModeValue('white', 'gray.900');
     const boxColor = useColorModeValue('gray.700', 'blue.900');
@@ -75,11 +77,29 @@ export default function PromotionPage() {
 
     useEffect(() => {
         const getTransfers = async () => {
+            let page = 1;
+            const pageSize = 1000;
+            let allTransfers: Transfer[] = [];
+            setLoading(true);
+
             try {
-                const response = await fetchTransfers();
-                if (response?.data) {
-                    setTransferData(response.data as Transfer[]);
+                while (true) {
+                    const response = await fetchTransfers(page, pageSize);
+                    if (response?.data?.length === 0) {
+                        break; // Exit the loop if no more data is returned
+                    }
+                    allTransfers = [...allTransfers, ...response.data];
+                    page += 1; // Move to the next page
                 }
+
+                setTransferData(allTransfers);
+
+                // Get the most recent createdAt date for last updated display
+                if (allTransfers.length > 0) {
+                    const lastUpdatedDate = allTransfers[0]?.attributes?.createdAt;
+                    setLastUpdated(lastUpdatedDate);
+                }
+
             } catch (error: any) {
                 if (error?.response?.status === 401 && error?.response?.data?.message === 'Unauthorized') {
                     setError('You are not authorized to view this page');
@@ -94,6 +114,7 @@ export default function PromotionPage() {
 
         getTransfers();
     }, []);
+
 
     // Memoized filtered and sorted data
     const filteredData = useMemo(() => {
@@ -127,7 +148,7 @@ export default function PromotionPage() {
             const dateA = new Date(a.attributes.OrderDt).getTime();
             const dateB = new Date(b.attributes.OrderDt).getTime();
 
-            return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
+            return sortOrder === 'desc' ? dateA - dateB : dateB - dateA;
         });
 
         return data;
@@ -169,7 +190,7 @@ export default function PromotionPage() {
     // Total number of filtered records
     const totalRecords = filteredData.length;
 
-    const handleSorting = useCallback((sortOrder: 'asc' | 'desc') => {
+    const handleSorting = useCallback((sortOrder: 'desc' | 'asc') => {
         setSortOrder(sortOrder);
         setCurrentPage(1);
     }, []);
@@ -257,6 +278,9 @@ export default function PromotionPage() {
                 onSortByDate={handleSorting}
             />
 
+            {/* Display Last Updated Date */}
+            <LastUpdated lastUpdated={lastUpdated} />
+
             {loading ? (
                 <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={4}>
                     {[...Array(ITEMS_PER_PAGE)].map((_, index) => (
@@ -337,6 +361,7 @@ export default function PromotionPage() {
                                         <Text ml={2}>{attributes.Description}</Text>
                                     </Flex>
                                 </CardBody>
+                                <Divider />
                                 <CardFooter py={2} px={3} display="flex" alignItems="center" justifyContent="space-between">
                                     {fileUrl && (
                                         <Tooltip label="Download" fontSize="xs">
@@ -349,7 +374,7 @@ export default function PromotionPage() {
                                             />
                                         </Tooltip>
                                     )}
-                                    <Text fontSize="x-small" color="gray.500" textAlign="right" w="100%">
+                                    <Text fontSize="xs" color="gray.500" textAlign="right" w="100%">
                                         Published on: <Text as="span" display="block">{createdAt}</Text>
                                     </Text>
                                 </CardFooter>
