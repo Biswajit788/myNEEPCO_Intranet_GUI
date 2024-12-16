@@ -10,13 +10,13 @@ import {
   Divider,
   Button,
   Flex,
-  keyframes,
   Spinner,
   List,
   ListItem,
   Icon,
 } from '@chakra-ui/react';
 import NextLink from 'next/link';
+import { keyframes } from '@emotion/react';
 import { useRouter } from 'next/navigation';
 import { fetchCirculars } from '@/services/api';
 import { AttachmentIcon } from '@chakra-ui/icons'
