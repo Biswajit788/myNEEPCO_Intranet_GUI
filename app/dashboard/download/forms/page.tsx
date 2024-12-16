@@ -25,9 +25,9 @@ import {
 import { DownloadIcon, SearchIcon } from '@chakra-ui/icons';
 import NextLink from 'next/link';
 import { fetchForms } from '@/services/api';
+import LastUpdated from '@/components/LastUpdated';
 import Pagination from '@/components/Pagination';
 
-// Define FormData type
 interface FormData {
     id: string;
     attributes: {
@@ -39,6 +39,7 @@ interface FormData {
                 };
             };
         };
+        createdAt: string;
     };
 }
 
@@ -50,6 +51,7 @@ const FormPage = () => {
     const [totalPages, setTotalPages] = useState<number>(1);
     const [searchTerm, setSearchTerm] = useState<string>('');
     const [totalRecords, setTotalRecords] = useState<number>(0);
+    const [lastUpdated, setLastUpdated] = useState<string | null>(null);
 
     const itemsPerPage = 10; // Number of items per page
 
@@ -61,12 +63,33 @@ const FormPage = () => {
 
     useEffect(() => {
         const getForms = async () => {
+            let page = 1;
+            const pageSize = 1000;
+            let allForms: FormData[] = [];
+            setLoading(true);
+
             try {
-                const data = await fetchForms();
-                const formsData = data.data || [];
-                setForms(formsData);
-                setTotalRecords(formsData.length);
-                setTotalPages(Math.ceil(formsData.length / itemsPerPage));
+                while (true) {
+                    const response = await fetchForms(page, pageSize);
+
+                    if (response?.data?.length === 0) {
+                        break;
+                    }
+
+                    allForms = [...allForms, ...response.data];
+                    page += 1;
+                }
+
+                setForms(allForms);
+                setTotalRecords(allForms.length);
+                setTotalPages(Math.ceil(allForms.length / itemsPerPage));
+
+                // Get the most recent createdAt date for last updated display
+                if (allForms.length > 0) {
+                    const lastUpdatedDate = allForms[0]?.attributes?.createdAt;
+                    setLastUpdated(lastUpdatedDate);
+                }
+
             } catch (error) {
                 setError('Failed to load forms & application');
             } finally {
@@ -125,7 +148,7 @@ const FormPage = () => {
     return (
         <Box bg={bgcolor} p={4} rounded="md" shadow="md">
             <Box
-                mb={4}
+                mb={6}
                 p={4}
                 bg={boxColor}
                 color={textColor}
@@ -133,10 +156,10 @@ const FormPage = () => {
                 textAlign="left"
             >
                 <Text textTransform={'uppercase'}>
-                    Forms & Application
+                    Forms / Application
                 </Text>
             </Box>
-            <Box display="flex" justifyContent="flex-end" width="100%">
+            <Box display="flex" justifyContent="flex-start" width="100%">
                 <Box
                     width={{
                         base: '100%',  // Full width on small screens
@@ -155,6 +178,9 @@ const FormPage = () => {
                     </InputGroup>
                 </Box>
             </Box>
+
+            {/* Display Last Updated Date */}
+            <LastUpdated lastUpdated={lastUpdated} />
 
             {loading ? (
                 <Box>

@@ -11,6 +11,7 @@ import StatsCard from '@/components/StatsCard'
 import Circular from '@/components/Circular'
 import NewsUpdates from '@/components/NewsUpdates'
 import Birthday from '@/components/Birthday'
+import Footer from '@/components/Footer'
 
 export default function DashboardPage() {
   return (
@@ -43,7 +44,7 @@ export default function DashboardPage() {
       {/* Footer */}
       <Box as="footer" bg="gray.700" color="white" py={4} textAlign="center">
         <Text fontSize="sm">
-          © {new Date().getFullYear()} IT Department, NEEPCO LTD. All rights reserved.
+          © {new Date().getFullYear()} IT Department, Shillong, NEEPCO LTD. All rights reserved.
         </Text>
       </Box>
     </Box>

@@ -1,4 +1,4 @@
-'use client'
+'use client';
 
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import {
@@ -7,7 +7,6 @@ import {
   Badge,
   Link as ChakraLink,
   useColorModeValue,
-  Divider,
   Button,
   Flex,
   Spinner,
@@ -19,7 +18,7 @@ import NextLink from 'next/link';
 import { keyframes } from '@emotion/react';
 import { useRouter } from 'next/navigation';
 import { fetchCirculars } from '@/services/api';
-import { AttachmentIcon } from '@chakra-ui/icons'
+import { keyframes } from '@emotion/react';
 
 // Marquee animation keyframes
 const marquee = keyframes`
@@ -42,39 +41,51 @@ interface CircularData {
   };
 }
 
-// Function to check if the circular is recent (e.g., within the last 7 days)
+// Check if a circular is new (within the last 7 days)
 const isNew = (dateString: string) => {
   const date = new Date(dateString);
   const now = new Date();
   const diffInDays = (now.getTime() - date.getTime()) / (1000 * 3600 * 24);
   return diffInDays <= 7;
-}
+};
 
 const Circular = () => {
   const [circulars, setCirculars] = useState<CircularData[]>([]);
   const [loading, setLoading] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
+  //const [isHovered, setIsHovered] = useState(false);
 
   const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || '';
-  const titlebgcolor = useColorModeValue('gray.50', 'gray.900');
-  const bgcolor = useColorModeValue('white', 'gray.900');
-  const textcolor = useColorModeValue('blue.700', 'white');
+  const titleBgColor = useColorModeValue('gray.50', 'gray.900');
+  const bgColor = useColorModeValue('white', 'gray.900');
+  const textColor = useColorModeValue('blue.700', 'white');
   const router = useRouter();
 
-  // Memoized version of getCirculars to avoid re-creating the function on every render
   const getCirculars = useCallback(async () => {
-    try {
-      const response = await fetchCirculars();
-      let data = Array.isArray(response.data) ? response.data : []; // Ensure it's an array
+    let page = 1;
+    const pageSize = 1000;
+    let allCirculars: CircularData[] = [];
+    setLoading(true);
 
-      // Sort the circulars by date in descending order and get the most recent 10
-      data = data
-        .sort((a: CircularData, b: CircularData) => new Date(b.attributes.CircularDt).getTime() - new Date(a.attributes.CircularDt).getTime())
+    try {
+      while (true) {
+        const response = await fetchCirculars(page, pageSize);
+        const data = Array.isArray(response.data) ? response.data : [];
+
+        if (data.length === 0) break;
+
+        allCirculars = [...allCirculars, ...data];
+        page += 1;
+      }
+
+      const sortedData = allCirculars
+        .sort((a, b) => new Date(b.attributes.CircularDt).getTime() - new Date(a.attributes.CircularDt).getTime())
         .slice(0, 10);
 
-      setCirculars(data);
+      setCirculars(sortedData);
     } catch (error) {
       console.error('Error fetching circulars:', error);
+    } finally {
+      setLoading(false);
     }
   }, []);
 
@@ -82,34 +93,27 @@ const Circular = () => {
     getCirculars();
   }, [getCirculars]);
 
-  // Memoize the rendered circulars to prevent re-renders
   const renderedCirculars = useMemo(() => {
     const openInSmallWindow = (url: string) => {
       if (url !== '#') {
-        window.open(
-          url,
-          '_blank',
-          'width=600,height=400,scrollbars=yes,resizable=yes'
-        );
+        window.open(url, '_blank', 'width=600,height=400,scrollbars=yes,resizable=yes');
       }
     };
 
-    return Array.isArray(circulars) && circulars.length > 0 ? (
+    return circulars.length > 0 ? (
       <List spacing={3}>
         {circulars.map((circular) => (
           <ListItem key={circular.id} display="flex" alignItems="center" fontSize="13px">
-            <Icon as={AttachmentIcon} boxSize={3} mr={2} color={textcolor} />
+            <Icon as={AttachmentIcon} boxSize={3} mr={2} color={textColor} />
             <ChakraLink
               as="button"
               onClick={() => openInSmallWindow(`${baseUrl}${circular.attributes.File?.data?.attributes?.url || '#'}`)}
-              color={textcolor}
+              color={textColor}
               _hover={{ textDecoration: 'underline' }}
               textAlign="left"
             >
               {circular.attributes.Title}
             </ChakraLink>
-  
-            {/* New badge */}
             {isNew(circular.attributes.CircularDt) && (
               <Badge ml={2} colorScheme="green">
                 New
@@ -121,11 +125,11 @@ const Circular = () => {
     ) : (
       <Box>No circulars available.</Box>
     );
-  }, [circulars, baseUrl, textcolor]);
+  }, [circulars, baseUrl, textColor]);
 
   const handleSeeAllClick = () => {
-    setLoading(true); // Set loading state to true
-    router.push('/dashboard/circular'); // Navigate to the circular page
+    setLoading(true);
+    router.push('/dashboard/circular');
   };
 
   return (
@@ -133,7 +137,7 @@ const Circular = () => {
       <Flex
         justifyContent="space-between"
         alignItems="center"
-        bg={titlebgcolor}
+        bg={titleBgColor}
         p={2}
         shadow="md"
         borderTopRadius="md"
@@ -150,26 +154,18 @@ const Circular = () => {
         )}
       </Flex>
 
-      {/* Box content comes after the Flex */}
-      <Box
-        h="360px"
-        bg={bgcolor}
-        p={4}
-        shadow="md"
-        border="1px"
-        borderColor="gray.200"
-      >
-        <Box 
-          overflow="hidden" 
+      <Box h="360px" bg={bgColor} p={4} shadow="md" border="1px" borderColor="gray.200">
+        <Box
+          overflow="hidden"
           h="100%"
-          onMouseEnter={()=>{setIsHovered(true)}}
-          onMouseLeave={()=>{setIsHovered(false)}}
+          //onMouseEnter={() => setIsHovered(true)}
+          //onMouseLeave={() => setIsHovered(false)}
         >
           <Flex
             direction="column"
             animation={`${marquee} 20s linear infinite`}
             sx={{
-              animationPlayState: isHovered ? 'paused' : 'running',
+              //animationPlayState: isHovered ? 'paused' : 'running',
             }}
           >
             {renderedCirculars}
@@ -178,6 +174,6 @@ const Circular = () => {
       </Box>
     </>
   );
-}
+};
 
 export default React.memo(Circular);

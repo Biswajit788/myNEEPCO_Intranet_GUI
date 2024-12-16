@@ -19,7 +19,7 @@ interface ReportData {
   File?: FileData; // File is optional
 }
 
-const getCurrentMonth = () => String(new Date().getMonth() + 1).padStart(2, '0');
+const getCurrentMonth = () => MONTHS[new Date().getMonth()];
 
 const getCurrentYear = () => {
   const today = new Date();
@@ -122,9 +122,9 @@ const MonthlyGenerationReport = () => {
             width={{ base: 'full', md: 'auto' }}
             fontSize="sm"
           >
-            {MONTHS.map((monthName, index) => (
-              <option key={index + 1} value={monthName}>
-                {monthName}
+            {MONTHS.map((month, index) => (
+              <option key={index + 1} value={month}>
+                {month}
               </option>
             ))}
           </Select>

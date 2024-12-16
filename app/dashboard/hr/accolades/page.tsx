@@ -25,6 +25,7 @@ import {
 } from '@chakra-ui/react';
 import { DownloadIcon, SearchIcon } from '@chakra-ui/icons';
 import Pagination from '@/components/Pagination';
+import LastUpdated from '@/components/LastUpdated';
 import { fetchAccolades } from '@/services/api';
 
 interface AccoladesData {
@@ -61,16 +62,30 @@ const AccoladesPage = () => {
 
   useEffect(() => {
     const loadAccolades = async () => {
+      let page = 1;
+      const pageSize = 1000;
+      let allAccolades: AccoladesData[] = [];
+      setLoading(true);
+
       try {
-        const data = await fetchAccolades();
-        const accoladesData = data.data || [];
-        setAccolades(accoladesData);
-        setTotalRecords(accoladesData.length);
-        setTotalPages(Math.ceil(accoladesData.length / itemsPerPage));
+        while (true) {
+          const response = await fetchAccolades(page, pageSize);
+
+          if (response?.data?.length === 0) {
+            break;
+          }
+
+          allAccolades = [...allAccolades, ...response.data];
+          page += 1;
+        }
+
+        setAccolades(allAccolades);
+        setTotalRecords(allAccolades.length);
+        setTotalPages(Math.ceil(allAccolades.length / itemsPerPage));
 
         // Get the most recent createdAt date for last updated display
-        if (accoladesData.length > 0) {
-          const lastUpdatedDate = accoladesData[0]?.attributes?.createdAt;
+        if (allAccolades.length > 0) {
+          const lastUpdatedDate = allAccolades[0]?.attributes?.createdAt;
           setLastUpdated(lastUpdatedDate);
         }
       } catch (error: any) {
@@ -154,21 +169,17 @@ const AccoladesPage = () => {
               <SearchIcon color="gray.300" />
             </InputLeftElement>
             <Input
-              placeholder="Search"
+              placeholder="Search Accolades"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </InputGroup>
         </Box>
       </Box>
+      
       {/* Display Last Updated Date */}
-      <Box textAlign="right" fontSize="sm" fontStyle={'italic'} mb={2}>
-        {lastUpdated && (
-          <Text color="gray.400">
-            Last Updated On: &nbsp;{new Date(lastUpdated).toLocaleDateString()}
-          </Text>
-        )}
-      </Box>
+      <LastUpdated lastUpdated={lastUpdated} />
+
       {loading ? (
         <Box>
           <Skeleton height="40px" mb={4} />

@@ -55,80 +55,113 @@ export const fetchDashboard = async () => {
   return response.data;
 };
 
-export const fetchPromotions = async () => {
-  const response = await axios.get(`${API_URL}/api/promotions?populate=File&sort=id:desc`, {
-    headers: getHeaders(),
-  });
+export const fetchPromotions = async (page: number, pageSize: number) => {
+  const response = await axios.get(
+    `${API_URL}/api/promotions?populate=File&sort=id:desc&pagination[page]=${page}&pagination[pageSize]=${pageSize}`,
+    {
+      headers: getHeaders(),
+    }
+  );
   return response.data;
 };
 
-export const fetchTransfers = async () => {
-  const response = await axios.get(`${API_URL}/api/transfers?populate=File&sort=id:desc`, {
-    headers: getHeaders(),
-  });
+export const fetchTransfers = async (page: number, pageSize: number) => {
+  const response = await axios.get(
+    `${API_URL}/api/transfers?populate=File&sort=id:desc&pagination[page]=${page}&pagination[pageSize]=${pageSize}`,
+    {
+      headers: getHeaders(),
+    }
+  );
   return response.data;
 };
 
-export const fetchSeniorities = async () => {
-  const response = await axios.get(`${API_URL}/api/seniorities?populate=File&sort=id:desc`, {
-    headers: getHeaders(),
-  });
+export const fetchSeniorities = async (page: number, pageSize: number) => {
+  const response = await axios.get(
+    `${API_URL}/api/seniorities?populate=File&sort=id:desc&pagination[page]=${page}&pagination[pageSize]=${pageSize}`,
+    {
+      headers: getHeaders(),
+    }
+  );
   return response.data;
 };
 
-export const fetchCirculars = async () => {
-  const response = await axios.get(`${API_URL}/api/circulars?populate=File&sort=id:desc`, {
-    headers: getHeaders(),
-  });
+export const fetchCirculars = async (page: number, pageSize: number) => {
+  const response = await axios.get(
+    `${API_URL}/api/circulars?populate=File&sort=id:desc&pagination[page]=${page}&pagination[pageSize]=${pageSize}`,
+    {
+      headers: getHeaders(),
+    }
+  );
   return response.data;
 };
 
-export const fetchAccolades = async () => {
-  const response = await axios.get(`${API_URL}/api/accolades?populate=File&sort=id:desc`, {
-    headers: getHeaders(),
-  });
+export const fetchAccolades = async (page: number, pageSize: number) => {
+  const response = await axios.get(
+    `${API_URL}/api/accolades?populate=File&sort=id:desc&pagination[page]=${page}&pagination[pageSize]=${pageSize}`,
+    {
+      headers: getHeaders(),
+    }
+  );
   return response.data;
 };
 
-export const fetchUpdates = async () => {
-  const response = await axios.get(`${API_URL}/api/updates?populate=File&sort=id:desc`, {
-    headers: getHeaders(),
-  });
+export const fetchUpdates = async (page: number, pageSize: number) => {
+  const response = await axios.get(
+    `${API_URL}/api/updates?populate=File&sort=id:desc&pagination[page]=${page}&pagination[pageSize]=${pageSize}`,
+    {
+      headers: getHeaders(),
+    }
+  );
   return response.data;
 };
 
-export const fetchVigilance = async () => {
-  const response = await axios.get(`${API_URL}/api/vigilances?populate[File1][populate]=*&populate[File2][populate]=*&sort=id:desc`, {
-    headers: getHeaders(),
-  });
+export const fetchVigilance = async (page: number, pageSize: number) => {
+  const response = await axios.get(
+    `${API_URL}/api/vigilances?populate[File1][populate]=*&populate[File2][populate]=*&sort=id:desc&pagination[page]=${page}&pagination[pageSize]=${pageSize}`,
+    {
+      headers: getHeaders(),
+    }
+  );
   return response.data;
 };
 
-export const fetchTraining = async () => {
-  const response = await axios.get(`${API_URL}/api/trainings?populate=File&sort=id:desc`, {
-    headers: getHeaders(),
-  });
+export const fetchTraining = async (page: number, pageSize: number) => {
+  const response = await axios.get(
+    `${API_URL}/api/trainings?populate=File&sort=id:desc&pagination[page]=${page}&pagination[pageSize]=${pageSize}`,
+    {
+      headers: getHeaders(),
+    }
+  );
   return response.data;
 };
 
-export const fetchIncrement = async () => {
-  const response = await axios.get(`${API_URL}/api/increments?populate=File&sort=id:desc`, {
-    headers: getHeaders(),
-  });
+export const fetchIncrement = async (page: number, pageSize: number) => {
+  const response = await axios.get(
+    `${API_URL}/api/increments?populate=File&sort=id:desc&pagination[page]=${page}&pagination[pageSize]=${pageSize}`,
+    {
+      headers: getHeaders(),
+    }
+  );
   return response.data;
 };
 
-export const fetchScaleBenefit = async () => {
-  const response = await axios.get(`${API_URL}/api/scale-benefits?populate=File&sort=id:desc`, {
-    headers: getHeaders(),
-  });
+export const fetchScaleBenefit = async (page: number, pageSize: number) => {
+  const response = await axios.get(`
+  ${API_URL}/api/scale-benefits?populate=File&sort=id:desc&pagination[page]=${page}&pagination[pageSize]=${pageSize}`,
+    {
+      headers: getHeaders(),
+    }
+  );
   return response.data;
 };
 
-export const fetchForms = async () => {
-  const response = await axios.get(`${API_URL}/api/forms?populate=File&sort=id:desc`, {
-    headers: getHeaders(),
-  });
+export const fetchForms = async (page: number, pageSize: number) => {
+  const response = await axios.get(
+    `${API_URL}/api/forms?populate=File&sort=id:desc&pagination[page]=${page}&pagination[pageSize]=${pageSize}`,
+    {
+      headers: getHeaders(),
+    }
+  );
   return response.data;
 };
 
@@ -228,16 +261,22 @@ export const fetchCpRules = async () => {
   }
 };
 
-export const fetchErpData = async () => {
-  const response = await axios.get(`${API_URL}/api/erps?populate=File&sort=id:desc`, {
-    headers: getHeaders(),
-  });
+export const fetchErpData = async (page: number, pageSize: number) => {
+  const response = await axios.get(
+    `${API_URL}/api/erps?populate=File&sort=id:desc&pagination[page]=${page}&pagination[pageSize]=${pageSize}`,
+    {
+      headers: getHeaders(),
+    }
+  );
   return response.data;
 };
 
-export const fetchITPolicyData = async () => {
-  const response = await axios.get(`${API_URL}/api/it-policies?populate=File&sort=id:desc`, {
-    headers: getHeaders(),
-  });
+export const fetchITPolicyData = async (page: number, pageSize: number) => {
+  const response = await axios.get(
+    `${API_URL}/api/it-policies?populate=File&sort=id:desc&pagination[page]=${page}&pagination[pageSize]=${pageSize}`,
+    {
+      headers: getHeaders(),
+    }
+  );
   return response.data;
 };

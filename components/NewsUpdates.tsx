@@ -1,4 +1,4 @@
-'use client'
+'use client';
 
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import {
@@ -19,7 +19,7 @@ import NextLink from 'next/link';
 import { keyframes } from '@emotion/react';
 import { useRouter } from 'next/navigation';
 import { fetchUpdates } from '@/services/api';
-import { AttachmentIcon } from '@chakra-ui/icons'
+import { AttachmentIcon } from '@chakra-ui/icons';
 
 // Marquee animation keyframes
 const marquee = keyframes`
@@ -42,18 +42,18 @@ interface UpdateData {
   };
 }
 
-// Function to check if the Updates is recent (e.g., within the last 7 days)
+// Check if the update is recent (within the last 7 days)
 const isNew = (dateString: string) => {
   const date = new Date(dateString);
   const now = new Date();
   const diffInDays = (now.getTime() - date.getTime()) / (1000 * 3600 * 24);
   return diffInDays <= 7;
-}
+};
 
 const NewsUpdates = () => {
   const [updates, setUpdates] = useState<UpdateData[]>([]);
   const [loading, setLoading] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
+  //const [isHovered, setIsHovered] = useState(false);
 
   const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || '';
   const titlebgcolor = useColorModeValue('gray.50', 'gray.900');
@@ -61,20 +61,35 @@ const NewsUpdates = () => {
   const textcolor = useColorModeValue('blue.700', 'white');
   const router = useRouter();
 
-  // Memoized version of getCirculars to avoid re-creating the function on every render
   const getUpdates = useCallback(async () => {
-    try {
-      const response = await fetchUpdates();
-      let data = Array.isArray(response.data) ? response.data : []; // Ensure it's an array
+    let page = 1;
+    const pageSize = 1000;
+    let allUpdates: UpdateData[] = [];
+    setLoading(true);
 
-      // Sort the Updates by date in descending order and get the most recent 10
-      data = data
-        .sort((a: UpdateData, b: UpdateData) => new Date(b.attributes.Dated).getTime() - new Date(a.attributes.Dated).getTime())
+    try {
+      while (true) {
+        const response = await fetchUpdates(page, pageSize);
+        const data = Array.isArray(response.data) ? response.data : [];
+
+        if (data.length === 0) {
+          break;
+        }
+
+        allUpdates = [...allUpdates, ...data];
+        page += 1;
+      }
+
+      // Sort and get the most recent 10 updates
+      const sortedData = allUpdates
+        .sort((a, b) => new Date(b.attributes.Dated).getTime() - new Date(a.attributes.Dated).getTime())
         .slice(0, 10);
 
-      setUpdates(data);
+      setUpdates(sortedData);
     } catch (error) {
       console.error('Error fetching Updates:', error);
+    } finally {
+      setLoading(false);
     }
   }, []);
 
@@ -82,7 +97,7 @@ const NewsUpdates = () => {
     getUpdates();
   }, [getUpdates]);
 
-  // Memoize the rendered circulars to prevent re-renders
+  // Memoizing the rendered updates to prevent unnecessary re-renders
   const renderedUpdates = useMemo(() => {
     const openInSmallWindow = (url: string) => {
       if (url !== '#') {
@@ -94,7 +109,7 @@ const NewsUpdates = () => {
       }
     };
 
-    return Array.isArray(updates) && updates.length > 0 ? (
+    return updates.length > 0 ? (
       <List spacing={3}>
         {updates.map((update) => (
           <ListItem key={update.id} display="flex" alignItems="center" fontSize="13px">
@@ -121,10 +136,9 @@ const NewsUpdates = () => {
     );
   }, [updates, baseUrl, textcolor]);
 
-
   const handleSeeAllClick = () => {
-    setLoading(true); // Set loading state to true
-    router.push('/dashboard/update'); // Navigate to the Updates page
+    setLoading(true);
+    router.push('/dashboard/update');
   };
 
   return (
@@ -137,10 +151,10 @@ const NewsUpdates = () => {
         shadow="md"
         borderTopRadius="md"
       >
-        <chakra.h3 fontSize="md" fontWeight="bold" >
+        <chakra.h3 fontSize="md" fontWeight="bold">
           Latest Updates
         </chakra.h3>
-        {loading ? ( // Display spinner if loading
+        {loading ? (
           <Spinner size="sm" />
         ) : (
           <Button size="sm" variant="ghost" colorScheme="blue" onClick={handleSeeAllClick}>
@@ -148,34 +162,26 @@ const NewsUpdates = () => {
           </Button>
         )}
       </Flex>
-      {/* Box content comes after the Flex */}
-      <Box
-        h="360px"
-        bg={bgcolor}
-        p={4}
-        shadow="md"
-        border="1px"
-        borderColor="gray.200"
-      >
+      <Box h="360px" bg={bgcolor} p={4} shadow="md" border="1px" borderColor="gray.200">
         <Box
           overflow="hidden"
           h="100%"
-          onMouseEnter={() => { setIsHovered(true) }}
-          onMouseLeave={() => { setIsHovered(false) }}
+          //onMouseEnter={() => setIsHovered(true)}
+          //onMouseLeave={() => setIsHovered(false)}
         >
           <Flex
             direction="column"
             animation={`${marquee} 20s linear infinite`}
             sx={{
-              animationPlayState: isHovered ? 'paused' : 'running',
+              //animationPlayState: isHovered ? 'paused' : 'running',
             }}
           >
             {renderedUpdates}
           </Flex>
         </Box>
-      </Box >
+      </Box>
     </>
   );
-}
+};
 
 export default React.memo(NewsUpdates);

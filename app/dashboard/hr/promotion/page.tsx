@@ -18,9 +18,11 @@ import {
     SimpleGrid,
     Skeleton,
     SkeletonText,
+    Divider,
 } from '@chakra-ui/react';
 import { fetchPromotions } from '@/services/api';
 import { DownloadIcon } from '@chakra-ui/icons';
+import LastUpdated from '@/components/LastUpdated';
 import Pagination from '@/components/Pagination';
 import Filter from '@/components/Filter';
 import NoDataDisplay from '@/components/NoDataDisplay';
@@ -65,7 +67,8 @@ export default function PromotionPage() {
     const [searchText, setSearchText] = useState('');
     const [orderNo, setOrderNo] = useState<string | null>(null);
     const [orderDt, setOrderDt] = useState<string | null>(null);
-    const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+    const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+    const [lastUpdated, setLastUpdated] = useState<string | null>(null);
 
     const bgColor = useColorModeValue('white', 'gray.900');
     const boxColor = useColorModeValue('gray.700', 'blue.900');
@@ -76,11 +79,30 @@ export default function PromotionPage() {
 
     useEffect(() => {
         const getPromotions = async () => {
+            let page = 1;
+            const pageSize = 1000;
+            let allPromotions: Promotion[] = [];
+            setLoading(true);
+    
             try {
-                const response = await fetchPromotions();
-                if (response?.data) {
-                    setPromotionData(response.data as Promotion[]);
+                while (true) {
+                    const response = await fetchPromotions(page, pageSize);
+    
+                    if (response?.data?.length === 0) {
+                        break; // Stop fetching if there are no more promotions
+                    }
+                    allPromotions = [...allPromotions, ...response.data];
+                    page += 1; // Move to the next page
                 }
+    
+                setPromotionData(allPromotions);
+
+                // Get the most recent createdAt date for last updated display
+                if (allPromotions.length > 0) {
+                    const lastUpdatedDate = allPromotions[0]?.attributes?.createdAt;
+                    setLastUpdated(lastUpdatedDate);
+                }
+
             } catch (error: any) {
                 if (error?.response?.status === 401 && error?.response?.data?.message === 'Unauthorized') {
                     setError('You are not authorized to view this page');
@@ -92,9 +114,10 @@ export default function PromotionPage() {
                 setTimeout(() => setLoading(false), LOADING_TIME_MS);
             }
         };
-
+    
         getPromotions();
     }, []);
+    
 
     // Memoized filtered and sorted data
     const filteredData = useMemo(() => {
@@ -130,7 +153,7 @@ export default function PromotionPage() {
             const dateA = new Date(a.attributes.Dated).getTime();
             const dateB = new Date(b.attributes.Dated).getTime();
 
-            return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
+            return sortOrder === 'desc' ? dateA - dateB : dateB - dateA;
         });
 
         return data;
@@ -172,7 +195,7 @@ export default function PromotionPage() {
     // Total number of filtered records
      const totalRecords = filteredData.length;
 
-    const handleSorting = useCallback((sortOrder: 'asc' | 'desc') => {
+    const handleSorting = useCallback((sortOrder: 'desc' | 'asc') => {
         setSortOrder(sortOrder);
         setCurrentPage(1);
     }, []);
@@ -261,6 +284,9 @@ export default function PromotionPage() {
                 onSortByDate={handleSorting}
             />
 
+            {/* Display Last Updated Date */}
+            <LastUpdated lastUpdated={lastUpdated} />
+
             {loading ? (
                 <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={4}>
                     {[...Array(ITEMS_PER_PAGE)].map((_, index) => (
@@ -345,6 +371,7 @@ export default function PromotionPage() {
                                         <Text ml={2}>{attributes.Remarks}</Text>
                                     </Flex>
                                 </CardBody>
+                                <Divider />
                                 <CardFooter py={2} px={3} display="flex" alignItems="center" justifyContent="space-between">
                                     {fileUrl && (
                                         <Tooltip label="Download" fontSize="xs">
@@ -357,7 +384,7 @@ export default function PromotionPage() {
                                             />
                                         </Tooltip>
                                     )}
-                                    <Text fontSize="x-small" color="gray.500" textAlign="right" w="100%">
+                                    <Text fontSize="xs" color="gray.500" textAlign="right" w="100%">
                                         Published on: <Text as="span" display="block">{createdAt}</Text>
                                     </Text>
                                 </CardFooter>
