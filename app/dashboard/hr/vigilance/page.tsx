@@ -20,8 +20,10 @@ import {
     Skeleton,
     SkeletonText,
     StackDivider,
+    Divider,
 } from '@chakra-ui/react';
 import { fetchVigilance } from '@/services/api';
+import LastUpdated from '@/components/LastUpdated';
 import Pagination from '@/components/Pagination';
 import NoDataDisplay from '@/components/NoDataDisplay';
 import Filter from '@/components/Filter';
@@ -69,6 +71,7 @@ export default function VigilancePage() {
     const [orderNo, setOrderNo] = useState<string | null>(null);
     const [orderDt, setOrderDt] = useState<string | null>(null);
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+    const [lastUpdated, setLastUpdated] = useState<string | null>(null);
 
     const bgColor = useColorModeValue('white', 'gray.900');
     const boxColor = useColorModeValue('gray.700', 'blue.900');
@@ -79,11 +82,28 @@ export default function VigilancePage() {
 
     useEffect(() => {
         const getVigilance = async () => {
+            let page = 1;
+            const pageSize = 1000;
+            let allVigilances: Vigilance[] = [];
+            setLoading(true);
+
             try {
-                const response = await fetchVigilance();
-                if (response?.data) {
-                    setVigilanceData(response.data as Vigilance[]);
+                while (true) {
+                    const response = await fetchVigilance(page, pageSize);
+                    if (response?.data?.length === 0) {
+                        break; // Exit the loop if no more data is returned
+                    }
+                    allVigilances = [...allVigilances, ...response.data];
+                    page += 1
                 }
+                setVigilanceData(allVigilances);
+
+                // Get the most recent createdAt date for last updated display
+                if (allVigilances.length > 0) {
+                    const lastUpdatedDate = allVigilances[0]?.attributes?.createdAt;
+                    setLastUpdated(lastUpdatedDate);
+                }
+
             } catch (error: any) {
                 if (error?.response?.status === 401 && error?.response?.data?.message === 'Unauthorized') {
                     setError('You are not authorized to view this page');
@@ -131,7 +151,7 @@ export default function VigilancePage() {
             const dateA = new Date(a.attributes.createdAt).getTime();
             const dateB = new Date(b.attributes.createdAt).getTime();
 
-            return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
+            return sortOrder === 'desc' ? dateA - dateB : dateB - dateA;
         });
 
         return data;
@@ -173,19 +193,43 @@ export default function VigilancePage() {
     // Total number of filtered records
     const totalRecords = filteredData.length;
 
-    const handleSorting = useCallback((sortOrder: 'asc' | 'desc') => {
+    const handleSorting = useCallback((sortOrder: 'desc' | 'asc') => {
         setSortOrder(sortOrder);
         setCurrentPage(1);
     }, []);
 
-    const handleDownload = useCallback((fileUrl: string | undefined) => {
+    const handleDownload = useCallback((fileUrl?: string) => {
         if (!fileUrl) {
+            console.error('File URL is not defined');
             setError('File URL is not defined.');
             return;
         }
 
         const fullUrl = `${baseUrl}${fileUrl}`;
-        window.open(fullUrl, '_blank');
+        const newWindow = window.open('', '_blank', 'width=600,height=400');
+
+        if (newWindow) {
+            newWindow.document.write(`
+        <html>
+          <head>
+            <title>Downloading...</title>
+          </head>
+          <body>
+            <p>Your download should start automatically. If it does not, <a href="${fullUrl}" download>click here</a>.</p>
+            <script>
+              window.onload = function() {
+                window.location.href = "${fullUrl}";
+              };
+            </script>
+          </body>
+        </html>
+      `);
+
+            newWindow.document.close();
+        } else {
+            console.error('Failed to open new window');
+            setError('Failed to open new window.');
+        }
     }, [baseUrl]);
 
     const formatDateTime = useCallback((dateString?: string) => {
@@ -236,6 +280,9 @@ export default function VigilancePage() {
                 onSortByDate={handleSorting}
             />
 
+            {/* Display Last Updated Date */}
+            <LastUpdated lastUpdated={lastUpdated} />
+
             {loading ? (
                 <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={4}>
                     {[...Array(ITEMS_PER_PAGE)].map((_, index) => (
@@ -277,7 +324,7 @@ export default function VigilancePage() {
                         const attributes = vigilance.attributes;
                         const fileUrlReport = attributes.File1?.data?.attributes?.url;
                         const fileUrlList = attributes.File2?.data?.attributes?.url;
-                        
+
                         const createdAt = formatDateTime(attributes.createdAt);
 
                         return (
@@ -334,6 +381,7 @@ export default function VigilancePage() {
                                         </Box>
                                     </Stack>
                                 </CardBody>
+                                <Divider />
                                 <CardFooter py={2} px={3} display="flex" alignItems="center" justifyContent="space-between">
                                     <Text fontSize="xs" color="gray.500" textAlign="right" w="100%">
                                         Published on: <Text as="span" display="block">{createdAt}</Text>

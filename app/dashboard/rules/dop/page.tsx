@@ -18,7 +18,9 @@ export default function DopRulesPage() {
                     title: item.attributes.Title || 'No Title',
                     dated: item.attributes.Dated || 'Unknown Date',
                     fileUrl: item.attributes.File?.data?.attributes?.url || null,
-                    file1Url: item.attributes.File1?.data?.attributes?.url || null,
+                    file1Urls: Array.isArray(item.attributes.File1?.data)
+                    ? item.attributes.File1.data.map((file: any) => file.attributes.url)
+                    : [],
                 }));
                 setDopRules(rules);
             } catch (err: any) {

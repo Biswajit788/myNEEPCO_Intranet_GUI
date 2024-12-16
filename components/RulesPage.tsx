@@ -8,7 +8,7 @@ interface Rule {
     title: string;
     dated: string;
     fileUrl: string;
-    file1Url: string;
+    file1Urls: string[];
 }
 
 interface RulesPageProps {
@@ -101,9 +101,9 @@ export default function RulesPage({ rules, title, heading, isLoading, error }: R
                                 {rules.length > 0 ? (
                                     rules.map((rule, index) => (
                                         <Box key={rule.id} p={4} boxShadow="md" borderRadius="md" width="100%">
-                                            <Text color={textColor} fontSize="sm" mb={2}><span style={{fontWeight: 'bold'}}>Serial No:</span> {index + 1}</Text>
-                                            <Text color={textColor} fontSize="sm"><span style={{fontWeight: 'bold'}}>Title:</span> {rule.title}</Text>
-                                            <Text color={textColor} fontSize="sm"><span style={{fontWeight: 'bold'}}>Dated:</span> {new Date(rule.dated).toLocaleDateString()}</Text>
+                                            <Text color={textColor} fontSize="sm" mb={2}><span style={{ fontWeight: 'bold' }}>Serial No:</span> {index + 1}</Text>
+                                            <Text color={textColor} fontSize="sm"><span style={{ fontWeight: 'bold' }}>Title:</span> {rule.title}</Text>
+                                            <Text color={textColor} fontSize="sm"><span style={{ fontWeight: 'bold' }}>Dated:</span> {new Date(rule.dated).toLocaleDateString()}</Text>
                                             <HStack justifyContent="flex-end" mt={2}>
                                                 <Tooltip label="Download" aria-label="View Tooltip">
                                                     <IconButton
@@ -189,34 +189,48 @@ export default function RulesPage({ rules, title, heading, isLoading, error }: R
                     <Skeleton isLoaded={!isLoading}>
                         <Flex direction="column">
                             {rules.length > 0 ? (
-                                rules.map((rule) =>
-                                    rule.file1Url ? (
-                                        <Box key={`amendment-${rule.id}`} mb={2}>
-                                            <Text fontSize={{ base: 'xs', md: 'sm' }}>
-                                                Click on the link to view amendment:
-                                                <br />
-                                                <a
-                                                    href={`${process.env.NEXT_PUBLIC_API_BASE_URL}${rule.file1Url}`}
-                                                    target='_blank'
-                                                    download
-                                                    style={{ color: 'blue', textDecoration: 'underline', fontStyle: 'italic', display: 'inline-flex', alignItems: 'center' }}
-                                                >
-                                                    <FaRegHandPointRight style={{ marginRight: '5px' }} /> click here
-                                                </a>
-                                            </Text>
-                                        </Box>
-                                    ) : (
-                                        <Box key={`no-file-${rule.id}`} mb={2}>
-                                            <Text color="red.500" fontSize={{ base: 'xs', md: 'sm' }}>No amendment available</Text>
-                                        </Box>
-                                    )
-                                )
+                                rules.map((rule) => (
+                                    <Box key={`amendment-${rule.id}`} mb={2}>
+                                        {rule.file1Urls && rule.file1Urls.length > 0 ? (
+                                            <>
+                                                <Text fontSize={{ base: 'xs', md: 'sm' }} mb={4}>
+                                                    Click on the links to view amendments:
+                                                </Text>
+                                                <ol style={{ paddingLeft: '20px' }}>
+                                                    {rule.file1Urls.map((fileUrl, index) => (
+                                                        <li key={`file-${index}`}>
+                                                            <a
+                                                                href='javascript:void(0);'
+                                                                onClick={() => handleDownload(fileUrl)}
+                                                                download
+                                                                style={{
+                                                                    color: 'blue',
+                                                                    fontSize: '14px',
+                                                                    textDecoration: 'underline',
+                                                                    fontStyle: 'italic',
+                                                                    display: 'inline-flex',
+                                                                    alignItems: 'center',
+                                                                }}
+                                                            >
+                                                                <FaRegHandPointRight style={{ marginRight: '5px' }} />
+                                                                Click here for Amendment No. {index + 1}
+                                                            </a>
+                                                        </li>
+                                                    ))}
+                                                </ol>
+                                            </>
+                                        ) : (
+                                            <Text color="red.500" fontSize={{ base: 'xs', md: 'sm' }} fontStyle={'italic'}>No amendment available</Text>
+                                        )}
+                                    </Box>
+                                ))
                             ) : (
                                 <Text color="gray.500" fontSize={{ base: 'xs', md: 'sm' }}>No amendments found</Text>
                             )}
                         </Flex>
                     </Skeleton>
                 </Box>
+
             </Flex>
         </>
     );

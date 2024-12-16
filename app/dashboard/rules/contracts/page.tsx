@@ -18,7 +18,9 @@ export default function ContractRulesPage() {
                     title: item.attributes.Title || 'No Title',
                     dated: item.attributes.Dated || 'Unknown Date',
                     fileUrl: item.attributes.File?.data?.attributes?.url || null,
-                    file1Url: item.attributes.File1?.data?.attributes?.url || null,
+                    file1Urls: Array.isArray(item.attributes.File1?.data)
+                        ? item.attributes.File1.data.map((file: any) => file.attributes.url)
+                        : [],
                 }));
                 setCpRules(rules);
             } catch (err: any) {
@@ -29,7 +31,7 @@ export default function ContractRulesPage() {
             }
         };
         fetchRules();
-    }, []);
+    }, []);    
 
     return (
         <RulesPage
