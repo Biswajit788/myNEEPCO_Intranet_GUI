@@ -25,7 +25,7 @@ export default function DopRulesPage() {
                 setDopRules(rules);
             } catch (err: any) {
                 console.error('Error fetching DoP rules:', err.message || err);
-                setError('Error fetching DoP rules');
+                setError('Error fetching DOP rules document');
             } finally {
                 setLoading(false);
             }

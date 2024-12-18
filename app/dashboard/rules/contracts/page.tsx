@@ -24,8 +24,8 @@ export default function ContractRulesPage() {
                 }));
                 setCpRules(rules);
             } catch (err: any) {
-                console.error('Error fetching DoP rules:', err.message || err);
-                setError('Error fetching DoP rules');
+                console.error('Error fetching rules:', err.message || err);
+                setError('Error fetching Contract & Procurement rules document');
             } finally {
                 setLoading(false);
             }

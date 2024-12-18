@@ -45,7 +45,8 @@ interface TrainingAttributes {
     OrderNo: string;
     OrderDt: string;
     Title: string;
-    TDate: string,
+    TDate: string;
+    updatedAt: string;
     createdAt: string;
     File?: FileAttributes;
 }
@@ -100,11 +101,17 @@ export default function TrainingPage() {
 
                 setTrainingData(allTrainings);
 
-                // Get the most recent createdAt date for last updated display
+                // Get the most recent updatedAt date for last updated display
                 if (allTrainings.length > 0) {
-                    const lastUpdatedDate = allTrainings[0]?.attributes?.createdAt;
-                    setLastUpdated(lastUpdatedDate);
-                }
+                    const lastUpdatedDate = allTrainings
+                      .map(training => new Date(training.attributes.updatedAt))
+                      .reduce((latest, current) =>
+                        current > latest ? current : latest,
+                        new Date(0)
+                      );
+          
+                    setLastUpdated(lastUpdatedDate.toISOString());
+                  }
 
             } catch (error: any) {
                 if (error?.response?.status === 401 && error?.response?.data?.message === 'Unauthorized') {

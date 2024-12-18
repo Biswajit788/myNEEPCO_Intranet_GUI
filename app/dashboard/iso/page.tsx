@@ -12,6 +12,10 @@ import {
     IconButton,
     Text,
     useColorModeValue,
+    Alert,
+    AlertIcon,
+    AlertTitle,
+    AlertDescription,
 } from '@chakra-ui/react';
 import { DownloadIcon } from '@chakra-ui/icons';
 import { fetchIsoPdf } from '@/services/api';
@@ -37,7 +41,7 @@ export default function IsoPage() {
                     if (data && data.data && data.data.length > 0) {
                         setPdfData(data.data);
                     } else {
-                        setError('No data found in the response');
+                        setError('Error Fetching ISO document');
                     }
                 } catch (err: any) {
                     console.error('Fetch PDF error:', err.message || err);
@@ -73,7 +77,13 @@ export default function IsoPage() {
     }
 
     if (error) {
-        return <Box color="red.500">{error}</Box>;
+        return (
+            <Alert status="error" mb={4}>
+                <AlertIcon />
+                <AlertTitle mr={2}>Error</AlertTitle>
+                <AlertDescription>{error}</AlertDescription>
+            </Alert>
+        );
     }
 
     return (

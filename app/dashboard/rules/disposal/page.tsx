@@ -24,8 +24,8 @@ export default function DisposalRulesPage() {
                 }));
                 setDisposalRules(rules);
             } catch (err: any) {
-                console.error('Error fetching DoP rules:', err.message || err);
-                setError('Error fetching DoP rules');
+                console.error('Error fetching Disposal rules:', err.message || err);
+                setError('Error fetching Disposal rules document');
             } finally {
                 setLoading(false);
             }

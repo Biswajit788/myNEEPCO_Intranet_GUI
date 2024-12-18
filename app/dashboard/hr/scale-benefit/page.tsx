@@ -42,7 +42,8 @@ interface ScaleBenefitAttributes {
     OrderNo: string;
     OrderDt: string;
     Description: string;
-    Grade: string,
+    Grade: string;
+    updatedAt: string;
     createdAt: string;
     File?: FileAttributes;
 }
@@ -97,11 +98,17 @@ export default function ScaleBenefitPage() {
 
                 setScaleBenefitdata(allScaleBenefits);
 
-                // Get the most recent createdAt date for last updated display
+                // Get the most recent updatedAt date for last updated display
                 if (allScaleBenefits.length > 0) {
-                    const lastUpdatedDate = allScaleBenefits[0]?.attributes?.createdAt;
-                    setLastUpdated(lastUpdatedDate);
-                }
+                    const lastUpdatedDate = allScaleBenefits
+                      .map(scaleBenefit => new Date(scaleBenefit.attributes.updatedAt))
+                      .reduce((latest, current) =>
+                        current > latest ? current : latest,
+                        new Date(0)
+                      );
+          
+                    setLastUpdated(lastUpdatedDate.toISOString());
+                  }
 
             } catch (error: any) {
                 if (error?.response?.status === 401 && error?.response?.data?.message === 'Unauthorized') {

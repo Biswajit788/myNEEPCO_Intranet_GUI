@@ -47,7 +47,7 @@ interface ErpData {
                 };
             };
         };
-        createdAt: string;
+        updatedAt: string;
     };
 }
 
@@ -77,10 +77,10 @@ const ErpPage = () => {
             setLoading(true);
 
             try {
-                while(true) {
+                while (true) {
                     const response = await fetchErpData(page, pageSize);
 
-                    if(response?.data?.length === 0){
+                    if (response?.data?.length === 0) {
                         break;
                     }
                     allData = [...allData, ...response.data];
@@ -90,10 +90,16 @@ const ErpPage = () => {
                 setTotalRecords(allData.length);
                 setTotalPages(Math.ceil(allData.length / itemsPerPage));
 
-                // Get the most recent createdAt date for last updated display
+                // Get the most recent updatedAt date for last updated display
                 if (allData.length > 0) {
-                    const lastUpdatedDate = allData[0]?.attributes?.createdAt;
-                    setLastUpdated(lastUpdatedDate);
+                    const lastUpdatedDate = allData
+                        .map(data => new Date(data.attributes.updatedAt))
+                        .reduce((latest, current) =>
+                            current > latest ? current : latest,
+                            new Date(0)
+                        );
+
+                    setLastUpdated(lastUpdatedDate.toISOString());
                 }
             } catch (error: any) {
                 if (error?.response?.status === 401 && error?.response?.data?.message === 'Unauthorized') {
@@ -190,7 +196,7 @@ const ErpPage = () => {
                 </Box>
             </Box>
             {/* Display Last Updated Date */}
-           <LastUpdated lastUpdated={lastUpdated}/>
+            <LastUpdated lastUpdated={lastUpdated} />
 
             {loading ? (
                 <Box>

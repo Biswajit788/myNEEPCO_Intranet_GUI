@@ -1,4 +1,9 @@
-import { Box, Table, Thead, Tbody, Tr, Th, Td, Text, Flex, Skeleton, useColorModeValue, Tooltip, IconButton, VStack, HStack, Stack } from '@chakra-ui/react';
+import {
+    Box, Table, Thead, Tbody, Tr, Th, Td, Text, Flex, Skeleton, useColorModeValue, Tooltip, IconButton, VStack, HStack, Stack, Alert,
+    AlertIcon,
+    AlertTitle,
+    AlertDescription,
+} from '@chakra-ui/react';
 import { DownloadIcon } from '@chakra-ui/icons';
 import { FaRegHandPointRight } from "react-icons/fa";
 import { useCallback } from 'react';
@@ -60,7 +65,15 @@ export default function RulesPage({ rules, title, heading, isLoading, error }: R
         }
     }, [baseUrl]);
 
-    if (error) return <Text color="red.500">{error}</Text>;
+    if (error) {
+        return (
+            <Alert status="error" mb={4}>
+                <AlertIcon />
+                <AlertTitle mr={2}>Error</AlertTitle>
+                <AlertDescription>{error}</AlertDescription>
+            </Alert>
+        );
+    }
 
     return (
         <>

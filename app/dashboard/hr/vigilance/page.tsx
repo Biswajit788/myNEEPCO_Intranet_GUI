@@ -42,8 +42,9 @@ interface FileAttributes {
 
 interface VigilanceAttributes {
     Title: string;
-    Qtr: string,
-    Year: string,
+    Qtr: string;
+    Year: string;
+    updatedAt: string;
     createdAt: string;
     File1?: FileAttributes;
     File2?: FileAttributes;
@@ -98,11 +99,17 @@ export default function VigilancePage() {
                 }
                 setVigilanceData(allVigilances);
 
-                // Get the most recent createdAt date for last updated display
+                // Get the most recent updatedAt date for last updated display
                 if (allVigilances.length > 0) {
-                    const lastUpdatedDate = allVigilances[0]?.attributes?.createdAt;
-                    setLastUpdated(lastUpdatedDate);
-                }
+                    const lastUpdatedDate = allVigilances
+                      .map(vigilance => new Date(vigilance.attributes.updatedAt))
+                      .reduce((latest, current) =>
+                        current > latest ? current : latest,
+                        new Date(0)
+                      );
+          
+                    setLastUpdated(lastUpdatedDate.toISOString());
+                  }
 
             } catch (error: any) {
                 if (error?.response?.status === 401 && error?.response?.data?.message === 'Unauthorized') {

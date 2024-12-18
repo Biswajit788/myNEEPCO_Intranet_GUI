@@ -41,6 +41,7 @@ interface TransferAttributes {
     OrderNo: string;
     OrderDt: string;
     Description: string;
+    updatedAt: string;
     createdAt: string;
     File?: FileAttributes;
 }
@@ -94,11 +95,17 @@ export default function PromotionPage() {
 
                 setTransferData(allTransfers);
 
-                // Get the most recent createdAt date for last updated display
+                // Get the most recent updatedAt date for last updated display
                 if (allTransfers.length > 0) {
-                    const lastUpdatedDate = allTransfers[0]?.attributes?.createdAt;
-                    setLastUpdated(lastUpdatedDate);
-                }
+                    const lastUpdatedDate = allTransfers
+                      .map(transfer => new Date(transfer.attributes.updatedAt))
+                      .reduce((latest, current) =>
+                        current > latest ? current : latest,
+                        new Date(0)
+                      );
+          
+                    setLastUpdated(lastUpdatedDate.toISOString());
+                  }
 
             } catch (error: any) {
                 if (error?.response?.status === 401 && error?.response?.data?.message === 'Unauthorized') {

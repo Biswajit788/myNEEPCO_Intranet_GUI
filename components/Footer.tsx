@@ -55,8 +55,8 @@ export default function SmallWithLogoLeft() {
       left="0"
       bottom="0"
       width="100%"
-      bg={useColorModeValue('gray.200', 'gray.900')}
-      color={useColorModeValue('gray.700', 'gray.200')}
+      bg={useColorModeValue('gray.800', 'gray.900')}
+      color={useColorModeValue('gray.200', 'gray.200')}
       py={4} // Padding on top and bottom
     >
       <Container

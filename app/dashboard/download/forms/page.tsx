@@ -21,6 +21,10 @@ import {
     Skeleton,
     SkeletonText,
     Text,
+    Alert,
+    AlertIcon,
+    AlertTitle,
+    AlertDescription,
 } from '@chakra-ui/react';
 import { DownloadIcon, SearchIcon } from '@chakra-ui/icons';
 import NextLink from 'next/link';
@@ -39,7 +43,7 @@ interface FormData {
                 };
             };
         };
-        createdAt: string;
+        updatedAt: string;
     };
 }
 
@@ -84,14 +88,20 @@ const FormPage = () => {
                 setTotalRecords(allForms.length);
                 setTotalPages(Math.ceil(allForms.length / itemsPerPage));
 
-                // Get the most recent createdAt date for last updated display
+                // Get the most recent updated_at date for the table
                 if (allForms.length > 0) {
-                    const lastUpdatedDate = allForms[0]?.attributes?.createdAt;
-                    setLastUpdated(lastUpdatedDate);
+                    const lastUpdatedDate = allForms
+                        .map(form => new Date(form.attributes.updatedAt))
+                        .reduce((latest, current) =>
+                            current > latest ? current : latest,
+                            new Date(0)
+                        );
+
+                    setLastUpdated(lastUpdatedDate.toISOString());
                 }
 
             } catch (error) {
-                setError('Failed to load forms & application');
+                setError('Error fetching Forms & Application data');
             } finally {
                 setLoading(false);
             }
@@ -144,7 +154,15 @@ const FormPage = () => {
         }
     }, [baseUrl]);
 
-    if (error) return <Box color="red.500">{error}</Box>;
+    if (error) {
+        return (
+            <Alert status="error" mb={4}>
+                <AlertIcon />
+                <AlertTitle mr={2}>Error</AlertTitle>
+                <AlertDescription>{error}</AlertDescription>
+            </Alert>
+        );
+    }
     return (
         <Box bg={bgcolor} p={4} rounded="md" shadow="md">
             <Box
@@ -195,7 +213,7 @@ const FormPage = () => {
                         ))}
                 </Box>
             ) : (
-                <TableContainer>
+                <TableContainer overflowX="auto">
                     <Table variant={tableVariant} size="sm" borderWidth="1px">
                         <Thead>
                             <Tr>
@@ -210,7 +228,9 @@ const FormPage = () => {
                                 .map((form, index) => (
                                     <Tr key={form.id}>
                                         <Td p={2}>{(currentPage - 1) * itemsPerPage + index + 1}</Td>
-                                        <Td p={2}>{form.attributes.Title}</Td>
+                                        <Td p={2} whiteSpace="normal" wordBreak="break-word">
+                                            {form.attributes.Title}
+                                        </Td>
                                         <Td p={2}>
                                             <Tooltip label="Download" aria-label="Download">
                                                 <IconButton
@@ -227,6 +247,7 @@ const FormPage = () => {
                         </Tbody>
                     </Table>
                 </TableContainer>
+
             )}
             <Pagination
                 currentPage={currentPage}

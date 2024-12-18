@@ -40,7 +40,7 @@ interface CircularData {
                 };
             };
         };
-        createdAt: string;
+        updatedAt: string;
     };
 }
 
@@ -84,10 +84,16 @@ const CircularPage = () => {
                 setTotalRecords(allCirculars.length);
                 setTotalPages(Math.ceil(allCirculars.length / itemsPerPage));
 
-                // Get the most recent createdAt date for last updated display
+                // Get the most recent updated_At date for the table
                 if (allCirculars.length > 0) {
-                    const lastUpdatedDate = allCirculars[0]?.attributes?.createdAt;
-                    setLastUpdated(lastUpdatedDate);
+                    const lastUpdatedDate = allCirculars
+                        .map(circular => new Date(circular.attributes.updatedAt))
+                        .reduce((latest, current) =>
+                            current > latest ? current : latest,
+                            new Date(0)
+                        );
+
+                    setLastUpdated(lastUpdatedDate.toISOString());
                 }
             } catch (error: any) {
                 if (error?.response?.status === 401 && error?.response?.data?.message === 'Unauthorized') {

@@ -43,7 +43,7 @@ interface UpdateData {
                 };
             };
         };
-        createdAt: string;
+        updatedAt: string;
     };
 }
 
@@ -86,17 +86,23 @@ const UpdatePage = () => {
                 setTotalRecords(allUpdates.length);
                 setTotalPages(Math.ceil(allUpdates.length / itemsPerPage));
 
-                // Get the most recent createdAt date for last updated display
+                // Get the most recent updatedAt date from the table
                 if (allUpdates.length > 0) {
-                    const lastUpdatedDate = allUpdates[0]?.attributes?.createdAt;
-                    setLastUpdated(lastUpdatedDate);
+                    const lastUpdatedDate = allUpdates
+                        .map(update => new Date(update.attributes.updatedAt))
+                        .reduce((latest, current) =>
+                            current > latest ? current : latest,
+                            new Date(0)
+                        );
+
+                    setLastUpdated(lastUpdatedDate.toISOString());
                 }
             } catch (error: any) {
                 if (error?.response?.status === 401 && error?.response?.data?.message === 'Unauthorized') {
                     setError('You are not authorized to view this page');
                 } else {
-                    console.error('Failed to fetch circulars:', error);
-                    setError('Failed to fetch circulars. Please try again later.');
+                    console.error('Failed to fetch Notice & updates:', error);
+                    setError('Failed to fetch Notice & updates. Please try again later.');
                 }
             } finally {
                 setLoading(false);

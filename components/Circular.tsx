@@ -18,7 +18,7 @@ import NextLink from 'next/link';
 import { keyframes } from '@emotion/react';
 import { useRouter } from 'next/navigation';
 import { fetchCirculars } from '@/services/api';
-import { keyframes } from '@emotion/react';
+import { AttachmentIcon } from '@chakra-ui/icons';
 
 // Marquee animation keyframes
 const marquee = keyframes`

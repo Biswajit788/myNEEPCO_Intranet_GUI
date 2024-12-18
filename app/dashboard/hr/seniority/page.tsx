@@ -42,6 +42,7 @@ interface SeniorityAttributes {
     OrderNo: string;
     OrderDt: string;
     Description: string;
+    updatedAt: string;
     createdAt: string;
     File?: FileAttributes;
 }
@@ -100,9 +101,15 @@ export default function SeniorityPage() {
 
                 // Get the most recent createdAt date for last updated display
                 if (allSeniorities.length > 0) {
-                    const lastUpdatedDate = allSeniorities[0]?.attributes?.createdAt;
-                    setLastUpdated(lastUpdatedDate);
-                }
+                    const lastUpdatedDate = allSeniorities
+                      .map(seniority => new Date(seniority.attributes.updatedAt))
+                      .reduce((latest, current) =>
+                        current > latest ? current : latest,
+                        new Date(0)
+                      );
+          
+                    setLastUpdated(lastUpdatedDate.toISOString());
+                  }
 
             } catch (error: any) {
                 if (error?.response?.status === 401 && error?.response?.data?.message === 'Unauthorized') {

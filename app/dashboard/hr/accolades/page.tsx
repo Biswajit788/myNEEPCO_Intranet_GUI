@@ -39,7 +39,7 @@ interface AccoladesData {
         };
       };
     };
-    createdAt: string;
+    updatedAt: string;
   };
 }
 
@@ -83,10 +83,16 @@ const AccoladesPage = () => {
         setTotalRecords(allAccolades.length);
         setTotalPages(Math.ceil(allAccolades.length / itemsPerPage));
 
-        // Get the most recent createdAt date for last updated display
+        // Get the most recent updatedAt date for last updated display
         if (allAccolades.length > 0) {
-          const lastUpdatedDate = allAccolades[0]?.attributes?.createdAt;
-          setLastUpdated(lastUpdatedDate);
+          const lastUpdatedDate = allAccolades
+            .map(accolade => new Date(accolade.attributes.updatedAt))
+            .reduce((latest, current) =>
+              current > latest ? current : latest,
+              new Date(0)
+            );
+
+          setLastUpdated(lastUpdatedDate.toISOString());
         }
       } catch (error: any) {
         if (error?.response?.status === 401 && error?.response?.data?.message === 'Unauthorized') {
@@ -176,7 +182,7 @@ const AccoladesPage = () => {
           </InputGroup>
         </Box>
       </Box>
-      
+
       {/* Display Last Updated Date */}
       <LastUpdated lastUpdated={lastUpdated} />
 

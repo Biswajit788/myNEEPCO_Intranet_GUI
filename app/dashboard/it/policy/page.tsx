@@ -47,7 +47,7 @@ interface ItPolicyData {
                 };
             };
         };
-        createdAt: string;
+        updatedAt: string;
     };
 }
 
@@ -77,10 +77,10 @@ const ITPolicyPage = () => {
             setLoading(true);
 
             try {
-                while(true) {
+                while (true) {
                     const response = await fetchITPolicyData(page, pageSize);
 
-                    if(response?.data?.length === 0){
+                    if (response?.data?.length === 0) {
                         break;
                     }
 
@@ -92,10 +92,16 @@ const ITPolicyPage = () => {
                 setTotalRecords(allData.length);
                 setTotalPages(Math.ceil(allData.length / itemsPerPage));
 
-                // Get the most recent createdAt date for last updated display
+                // Get the most recent updatedAt date for last updated display
                 if (allData.length > 0) {
-                    const lastUpdatedDate = allData[0]?.attributes?.createdAt;
-                    setLastUpdated(lastUpdatedDate);
+                    const lastUpdatedDate = allData
+                        .map(data => new Date(data.attributes.updatedAt))
+                        .reduce((latest, current) =>
+                            current > latest ? current : latest,
+                            new Date(0)
+                        );
+
+                    setLastUpdated(lastUpdatedDate.toISOString());
                 }
             } catch (error: any) {
                 if (error?.response?.status === 401 && error?.response?.data?.message === 'Unauthorized') {
@@ -192,7 +198,7 @@ const ITPolicyPage = () => {
                 </Box>
             </Box>
             {/* Display Last Updated Date */}
-            <LastUpdated lastUpdated={lastUpdated}/>
+            <LastUpdated lastUpdated={lastUpdated} />
 
             {loading ? (
                 <Box>

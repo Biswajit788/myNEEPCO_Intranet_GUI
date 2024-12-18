@@ -125,6 +125,7 @@ export default function SignInPage() {
           containerStyle: { maxWidth: toastWidth },
         });
       } else {
+        // Show the error code and message
         handleErrors(response.status, data.message);
       }
     } catch (error) {
@@ -139,6 +140,70 @@ export default function SignInPage() {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleErrors = (errorCode: number, errorMessage: string) => {
+    switch (errorCode) {
+      case 400:
+        // Bad Request (e.g., missing credentials)
+        toast({
+          title: "Invalid Credentials",
+          description: "User does not exist",
+          status: "error",
+          duration: 5000,
+          isClosable: true,
+          position: "top",
+          containerStyle: { maxWidth: toastWidth },
+        });
+        break;
+      case 401:
+        // Unauthorized (e.g., invalid password)
+        toast({
+          title: "Unauthorized",
+          description: "Invalid password",
+          status: "error",
+          duration: 5000,
+          isClosable: true,
+          position: "top",
+          containerStyle: { maxWidth: toastWidth },
+        });
+        break;
+      case 429:
+        // Too Many Requests (e.g., account locked due to too many failed attempts)
+        toast({
+          title: "Account Locked",
+          description: errorMessage,
+          status: "error",
+          duration: 5000,
+          isClosable: true,
+          position: "top",
+          containerStyle: { maxWidth: toastWidth },
+        });
+        break;
+      case 500:
+        // Internal Server Error
+        toast({
+          title: "Internal Server Error",
+          description: errorMessage,
+          status: "error",
+          duration: 5000,
+          isClosable: true,
+          position: "top",
+          containerStyle: { maxWidth: toastWidth },
+        });
+        break;
+      default:
+        // Generic error
+        toast({
+          title: "Error",
+          description: errorMessage,
+          status: "error",
+          duration: 5000,
+          isClosable: true,
+          position: "top",
+          containerStyle: { maxWidth: toastWidth },
+        });
     }
   };
 
@@ -203,39 +268,6 @@ export default function SignInPage() {
     }
   };
 
-  const handleErrors = (status: number, message: string) => {
-    if (status === 400) {
-      toast({
-        title: "Login Error",
-        description: 'User does not exist',
-        status: "error",
-        duration: 2000,
-        isClosable: true,
-        position: "top",
-        containerStyle: { maxWidth: toastWidth },
-      });
-    } else if (status === 401) {
-      toast({
-        title: "Login Error",
-        description: 'Incorrect Password',
-        status: "error",
-        duration: 2000,
-        isClosable: true,
-        position: "top",
-        containerStyle: { maxWidth: toastWidth },
-      });
-    } else {
-      toast({
-        title: "An error occurred",
-        description: message || 'Sign-in failed',
-        status: "error",
-        duration: 5000,
-        isClosable: true,
-        position: "top",
-        containerStyle: { maxWidth: toastWidth },
-      });
-    }
-  };
 
   const handleResendOtp = async () => {
     setLoading(true);

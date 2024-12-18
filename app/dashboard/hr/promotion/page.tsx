@@ -42,6 +42,7 @@ interface PromotionAttributes {
     Grade: string;
     Dated: string;
     Remarks: string;
+    updatedAt: string;
     createdAt: string;
     Description: string;
     File?: FileAttributes;
@@ -97,11 +98,17 @@ export default function PromotionPage() {
     
                 setPromotionData(allPromotions);
 
-                // Get the most recent createdAt date for last updated display
+                // Get the most recent updatedAt date for last updated display
                 if (allPromotions.length > 0) {
-                    const lastUpdatedDate = allPromotions[0]?.attributes?.createdAt;
-                    setLastUpdated(lastUpdatedDate);
-                }
+                    const lastUpdatedDate = allPromotions
+                      .map(promotion => new Date(promotion.attributes.updatedAt))
+                      .reduce((latest, current) =>
+                        current > latest ? current : latest,
+                        new Date(0)
+                      );
+          
+                    setLastUpdated(lastUpdatedDate.toISOString());
+                  }
 
             } catch (error: any) {
                 if (error?.response?.status === 401 && error?.response?.data?.message === 'Unauthorized') {
