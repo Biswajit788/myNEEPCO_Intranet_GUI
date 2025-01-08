@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Box, Button, VStack, Heading, Input, HStack, Flex, Table, Thead, Tbody, Tr, Th, Td, Text, useToast, useColorModeValue } from '@chakra-ui/react';
 import { SearchIcon } from '@chakra-ui/icons';
 import { fetchDailyGenerationReport } from '@/services/api';
+import useDownload from '@/components/hooks/useDownload';
 
 interface FileData {
   id: number;
@@ -29,6 +30,7 @@ const getCurrentDateForInput = () => {
 const DailyGenerationReport = () => {
 
   const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+  const token = localStorage.getItem('token');
   const toast = useToast();
   const [date, setDate] = useState<string>(getCurrentDateForInput());
   const [data, setData] = useState<ReportData[] | null>(null);
@@ -70,39 +72,8 @@ const DailyGenerationReport = () => {
     }
   };
 
-  const downloadFile = async (fileUrl: string, fileName: string) => {
-    const fullUrl = `${baseUrl}${fileUrl}`;
-
-    try {
-      // Fetch the file as a blob
-      const response = await fetch(fullUrl);
-      const blob = await response.blob();
-
-      // Create a Blob URL for the file
-      const blobUrl = URL.createObjectURL(blob);
-
-      // Create an invisible link element
-      const link = document.createElement('a');
-      link.href = blobUrl;
-      link.setAttribute('download', fileName);
-
-      // Append the link to the DOM
-      document.body.appendChild(link);
-
-      // Programmatically trigger a click to download the file
-      link.click();
-
-      // Clean up and remove the link
-      document.body.removeChild(link);
-
-      // Revoke the Blob URL to free up memory
-      URL.revokeObjectURL(blobUrl);
-    } catch (error) {
-      console.error("Failed to download file:", error);
-    }
-  };
-
-
+  //Download function hook handler
+  const { handleDownload } = useDownload(baseUrl);
 
   return (
     <VStack spacing={{ base: 4, md: 6 }} align="stretch" p={{ base: 3, md: 5 }}>
@@ -189,8 +160,15 @@ const DailyGenerationReport = () => {
                       {item.File ? (
                         <Button
                           colorScheme="blue"
-                          size="xs"
-                          onClick={() => downloadFile(item.File?.url || '', item.File?.name || 'unknown-file')}
+                          size="xs"   
+                          onClick={() => {
+                            if (token) {
+                              handleDownload(item.File?.url, token);
+                            } else {
+                              console.error('User is not authenticated. Token is missing.');
+                              alert('User is not Authenticated.')
+                            }
+                          }}
                         >
                           Download
                         </Button>

@@ -19,14 +19,15 @@ import {
 } from '@chakra-ui/react';
 import { DownloadIcon } from '@chakra-ui/icons';
 import { fetchIsoPdf } from '@/services/api';
-
-const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+import useDownload from '@/components/hooks/useDownload';
 
 export default function IsoPage() {
     const [pdfData, setPdfData] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
+    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+    const token = localStorage.getItem('atoken');
     const bgcolor = useColorModeValue('white', 'gray.900');
     const tableHeaderColor = useColorModeValue('gray.700', 'blue.900');
     const textColor = useColorModeValue('white', 'white');
@@ -55,39 +56,23 @@ export default function IsoPage() {
         }
     }, []);
 
-    const handleDownload = (fileUrl: string) => {
-        const completeUrl = `${API_URL}${fileUrl}`;
-
-        // Open a new window with the PDF file (small window)
-        const newWindow = window.open(
-            completeUrl,
-            '_blank',
-            'width=600,height=800,menubar=no,toolbar=no,status=no'
-        );
-
-        if (newWindow) {
-            // Focus on the new window
-            newWindow.focus();
-        }
-    };
+    //Download function hook handler
+    const { handleDownload } = useDownload(baseUrl);
 
 
     if (loading) {
         return <Spinner />;
     }
 
-    if (error) {
-        return (
-            <Alert status="error" mb={4}>
-                <AlertIcon />
-                <AlertTitle mr={2}>Error</AlertTitle>
-                <AlertDescription>{error}</AlertDescription>
-            </Alert>
-        );
-    }
-
     return (
         <Box bg={bgcolor} p={4}>
+            {error && (
+                <Alert status="error" mb={4}>
+                    <AlertIcon />
+                    <AlertTitle>Error</AlertTitle>
+                    <AlertDescription>{error}</AlertDescription>
+                </Alert>
+            )}
             <Box mb={{ base: 4, md: 8 }} p={4} bg={tableHeaderColor} color={textColor} borderRadius="sm" textAlign="left">
                 <Text textTransform={'uppercase'} fontSize={{ base: 'sm', md: 'md' }}>
                     STATUS OF ACCREDITATION OF NEEPCO
@@ -122,13 +107,21 @@ export default function IsoPage() {
                                     <Td fontSize="sm">
                                         {fileUrl ? (
                                             <IconButton
+                                                onClick={() => {
+                                                    if (token) {
+                                                        handleDownload(fileUrl, token);
+                                                    } else {
+                                                        console.error('User is not authenticated. Token is missing.');
+                                                        alert('User is not Authenticated')
+                                                        setError('User is not authenticated.')
+                                                    }
+                                                }}
                                                 icon={<DownloadIcon />}
                                                 aria-label="Download PDF"
-                                                onClick={() => handleDownload(fileUrl)}
                                                 borderRadius="50%"
                                             />
                                         ) : (
-                                            <Text color="red.500" fontSize="sm">No File</Text>
+                                            <Text color="red.500" fontSize="sm">No File Available</Text>
                                         )}
                                     </Td>
                                 </Tr>

@@ -27,6 +27,7 @@ import { DownloadIcon, SearchIcon } from '@chakra-ui/icons';
 import Pagination from '@/components/Pagination';
 import LastUpdated from '@/components/LastUpdated';
 import { fetchAccolades } from '@/services/api';
+import useDownload from '@/components/hooks/useDownload';
 
 interface AccoladesData {
   id: string;
@@ -55,6 +56,8 @@ const AccoladesPage = () => {
 
   const itemsPerPage = 10;
   const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+  const token = localStorage.getItem('token');
+  
   const bgcolor = useColorModeValue('white', 'gray.900');
   const boxColor = useColorModeValue('gray.700', 'blue.900');
   const textColor = useColorModeValue('white', 'white');
@@ -119,40 +122,8 @@ const AccoladesPage = () => {
     return filtered;
   }, [searchTerm, accolades]);
 
-  // Function to handle download
-  const handleDownload = useCallback((fileUrl?: string) => {
-    if (!fileUrl) {
-      console.error('File URL is not defined');
-      setError('File URL is not defined.');
-      return;
-    }
-
-    const fullUrl = `${baseUrl}${fileUrl}`;
-    const newWindow = window.open('', '_blank', 'width=600,height=500');
-
-    if (newWindow) {
-      newWindow.document.write(`
-                <html>
-                    <head>
-                        <title>Downloading...</title>
-                    </head>
-                    <body>
-                        <p>Your download should start automatically. If it does not, <a href="${fullUrl}" download>click here</a>.</p>
-                        <script>
-                            window.onload = function() {
-                                window.location.href = "${fullUrl}";
-                            };
-                        </script>
-                    </body>
-                </html>
-            `);
-
-      newWindow.document.close();
-    } else {
-      console.error('Failed to open new window');
-      setError('Failed to open new window.');
-    }
-  }, [baseUrl]);
+  //Download function hook handler
+  const { handleDownload } = useDownload(baseUrl);
 
   return (
     <Box bg={bgcolor} p={4} rounded="md" shadow="md">
@@ -225,12 +196,20 @@ const AccoladesPage = () => {
                       {accolade.attributes.File?.data?.attributes?.url ? (
                         <Tooltip label="Download" aria-label="Download">
                           <IconButton
-                            onClick={() => handleDownload(accolade.attributes.File?.data?.attributes?.url)}
+                            onClick={() => {
+                              if (token) {
+                                handleDownload(accolade.attributes.File?.data?.attributes?.url, token);
+                              } else {
+                                console.error('User is not authenticated. Token is missing.');
+                                setError('User is not authenticated.')
+                              }
+                            }}
                             icon={<DownloadIcon />}
                             colorScheme="blue"
                             size="sm"
                             aria-label="Download Accolades"
                           />
+
                         </Tooltip>
                       ) : (
                         'No File Available'

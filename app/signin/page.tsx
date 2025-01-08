@@ -15,13 +15,15 @@ import {
   Spinner,
   useToast,
   useDisclosure,
-  useBreakpointValue
+  useBreakpointValue,
+  Icon
 } from '@chakra-ui/react';
 import Link from 'next/link';
 import { useEffect, useState, useRef } from 'react';
 import { Formik, Field, Form } from 'formik';
 import * as Yup from 'yup';
 import { useRouter } from 'next/navigation';
+import { FaHome } from 'react-icons/fa';
 import ForgotPasswordModal from '@/components/ForgotPasswordModal';
 
 interface SignInFormValues {
@@ -63,6 +65,10 @@ export default function SignInPage() {
 
   const toastWidth = useBreakpointValue({ base: '80%', md: 'md' });
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const navigateHome = () => {
+    router.push('/');
+  };
 
   const startCountdown = () => {
     setTimerActive(true); // Set timer active
@@ -332,6 +338,16 @@ export default function SignInPage() {
       backgroundPosition="center"
       backgroundRepeat="no-repeat"
     >
+      {/* Home Icon */}
+      <Box
+        position="absolute"
+        top="1rem"
+        left="1rem"
+        onClick={navigateHome}
+        cursor="pointer"
+      >
+        <Icon as={FaHome} w={6} h={6} color="white" _hover={{ color: 'blue.400' }} />
+      </Box>
       <Stack
         spacing={8}
         ml={'auto'}

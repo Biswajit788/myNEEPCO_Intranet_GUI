@@ -42,12 +42,12 @@ interface UpdateData {
   };
 }
 
-// Check if the update is recent (within the last 7 days)
+// Check if the update is recent (within the last 15 days)
 const isNew = (dateString: string) => {
   const date = new Date(dateString);
   const now = new Date();
   const diffInDays = (now.getTime() - date.getTime()) / (1000 * 3600 * 24);
-  return diffInDays <= 7;
+  return diffInDays <= 15;
 };
 
 const NewsUpdates = () => {
@@ -99,7 +99,7 @@ const NewsUpdates = () => {
 
   // Memoizing the rendered updates to prevent unnecessary re-renders
   const renderedUpdates = useMemo(() => {
-    const openInSmallWindow = (url: string) => {
+    /* const openInSmallWindow = (url: string) => {
       if (url !== '#') {
         window.open(
           url,
@@ -107,22 +107,22 @@ const NewsUpdates = () => {
           'width=600,height=400,scrollbars=yes,resizable=yes'
         );
       }
-    };
+    }; */
 
     return updates.length > 0 ? (
       <List spacing={3}>
         {updates.map((update) => (
           <ListItem key={update.id} display="flex" alignItems="center" fontSize="13px">
             <Icon as={AttachmentIcon} boxSize={3} mr={2} color={textcolor} />
-            <ChakraLink
+            {/* <ChakraLink
               as="button"
               onClick={() => openInSmallWindow(`${baseUrl}${update.attributes.File?.data?.attributes?.url || '#'}`)}
               color={textcolor}
               _hover={{ textDecoration: 'underline' }}
               textAlign="left"
-            >
+            > */}
               {update.attributes.Title}
-            </ChakraLink>
+            {/* </ChakraLink> */}
             {isNew(update.attributes.Dated) && (
               <Badge ml={2} colorScheme="green">
                 New

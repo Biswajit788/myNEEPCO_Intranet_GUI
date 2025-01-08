@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import RulesPage from '@/components/RulesPage';
 import { fetchDopRules } from '@/services/api';
 
-export default function DopRulesPage() {
+export default function ContractRulesPage() {
     const [dopRules, setDopRules] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -19,19 +19,19 @@ export default function DopRulesPage() {
                     dated: item.attributes.Dated || 'Unknown Date',
                     fileUrl: item.attributes.File?.data?.attributes?.url || null,
                     file1Urls: Array.isArray(item.attributes.File1?.data)
-                    ? item.attributes.File1.data.map((file: any) => file.attributes.url)
-                    : [],
+                        ? item.attributes.File1.data.map((file: any) => file.attributes.url)
+                        : [],
                 }));
                 setDopRules(rules);
             } catch (err: any) {
-                console.error('Error fetching DoP rules:', err.message || err);
-                setError('Error fetching DOP rules document');
+                console.error('Error fetching rules:', err.message || err);
+                setError('Error fetching DOP document');
             } finally {
                 setLoading(false);
             }
         };
         fetchRules();
-    }, []);
+    }, []);    
 
     return (
         <RulesPage

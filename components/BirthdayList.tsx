@@ -59,6 +59,9 @@ const BirthdayList = ({ people }: { people: Person[] }) => {
     });
 
     const cardBgColor = useColorModeValue('white', 'gray.700');
+    const cardBg1Color = useColorModeValue('yellow.200', 'gray.900');
+    const cardBg1ColorHeadText = useColorModeValue('green', 'yellow.200');
+    const cardBg1ColorBodyText = useColorModeValue('gray.600', 'gray.200');
 
     return (
         <Grid
@@ -72,14 +75,14 @@ const BirthdayList = ({ people }: { people: Person[] }) => {
                 </Text>
                 {/* Show the birthday message only if there is at least one birthday */}
                 {peopleWithTodayBirthday.length > 0 && (
-                    <Box mb={4} p={4} bg="yellow.200" borderRadius="md" textAlign="center">
-                        <Text fontSize="lg" fontWeight="bold">
+                    <Box mb={4} p={4} bg={cardBg1Color} borderRadius="md" textAlign="left">
+                        <Text fontSize="lg" fontWeight="bold" color={cardBg1ColorHeadText}>
                             🎉 {peopleWithTodayBirthday.length === 1 ? 'Happy Birthday to our wonderful birthday star!' : 'Happy Birthday to all our wonderful birthday stars!'} 🎉
                         </Text>
-                        <Text fontSize="sm" color="gray.600">
+                        <Text fontSize="small" color={cardBg1ColorBodyText}>
                             {peopleWithTodayBirthday.length === 1
-                                ? 'Wishing you a day filled with love, joy, and wonderful memories!'
-                                : 'Wishing you all a day filled with love, joy, and wonderful memories!'}
+                                ? 'May you be blessed with happiness, prosperity and good health...today and always!'
+                                : 'May you all be blessed with happiness, prosperity and good health...today and always!'}
                         </Text>
                     </Box>
                 )}
@@ -95,7 +98,7 @@ const BirthdayList = ({ people }: { people: Person[] }) => {
                             <Flex key={id} mb={4} align="center" mt="6">
                                 <Image
                                     borderRadius="full"
-                                    boxSize="40px"
+                                    boxSize="30px"
                                     src={image}
                                     alt={name}
                                     mr={4}
@@ -127,7 +130,7 @@ const BirthdayList = ({ people }: { people: Person[] }) => {
                             <Flex key={id} mb={4} align="center" mt="2">
                                 <Image
                                     borderRadius="full"
-                                    boxSize="40px"
+                                    boxSize="30px"
                                     src={image}
                                     alt={name}
                                     mr={4}

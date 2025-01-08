@@ -55,17 +55,18 @@ export default function SmallWithLogoLeft() {
       left="0"
       bottom="0"
       width="100%"
-      bg={useColorModeValue('gray.800', 'gray.900')}
-      color={useColorModeValue('gray.200', 'gray.200')}
+      bg={useColorModeValue('gray.700', 'gray.900')}
+      color={useColorModeValue('gray.100', 'gray.200')}
       py={4} // Padding on top and bottom
     >
       <Container
         as={Stack}
-        maxW={'6xl'}
+        maxW={'7xl'}
         direction={{ base: 'column', md: 'row' }}
         spacing={4}
         justify={{ base: 'center', md: 'space-between' }}
         align={{ base: 'center', md: 'center' }}
+        fontSize={'sm'}
       >
         <Text>© {currentYear} IT Department, NEEPCO LTD. All rights reserved</Text>
         <Stack direction={'row'} spacing={6}>

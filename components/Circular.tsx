@@ -14,11 +14,10 @@ import {
   ListItem,
   Icon,
 } from '@chakra-ui/react';
-import NextLink from 'next/link';
-import { keyframes } from '@emotion/react';
+import { AttachmentIcon } from '@chakra-ui/icons';
 import { useRouter } from 'next/navigation';
 import { fetchCirculars } from '@/services/api';
-import { AttachmentIcon } from '@chakra-ui/icons';
+import { keyframes } from '@emotion/react';
 
 // Marquee animation keyframes
 const marquee = keyframes`
@@ -41,12 +40,12 @@ interface CircularData {
   };
 }
 
-// Check if a circular is new (within the last 7 days)
+// Check if a circular is new (within the last 15 days)
 const isNew = (dateString: string) => {
   const date = new Date(dateString);
   const now = new Date();
   const diffInDays = (now.getTime() - date.getTime()) / (1000 * 3600 * 24);
-  return diffInDays <= 7;
+  return diffInDays <= 15;
 };
 
 const Circular = () => {
@@ -94,26 +93,26 @@ const Circular = () => {
   }, [getCirculars]);
 
   const renderedCirculars = useMemo(() => {
-    const openInSmallWindow = (url: string) => {
+   /*  const openInSmallWindow = (url: string) => {
       if (url !== '#') {
         window.open(url, '_blank', 'width=600,height=400,scrollbars=yes,resizable=yes');
       }
-    };
+    }; */
 
     return circulars.length > 0 ? (
       <List spacing={3}>
         {circulars.map((circular) => (
           <ListItem key={circular.id} display="flex" alignItems="center" fontSize="13px">
             <Icon as={AttachmentIcon} boxSize={3} mr={2} color={textColor} />
-            <ChakraLink
+            {/* <ChakraLink
               as="button"
               onClick={() => openInSmallWindow(`${baseUrl}${circular.attributes.File?.data?.attributes?.url || '#'}`)}
               color={textColor}
               _hover={{ textDecoration: 'underline' }}
               textAlign="left"
-            >
+            > */}
               {circular.attributes.Title}
-            </ChakraLink>
+            {/* </ListItem></ChakraLink> */}
             {isNew(circular.attributes.CircularDt) && (
               <Badge ml={2} colorScheme="green">
                 New

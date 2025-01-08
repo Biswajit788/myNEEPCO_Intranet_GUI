@@ -26,6 +26,7 @@ import LastUpdated from '@/components/LastUpdated';
 import Pagination from '@/components/Pagination';
 import Filter from '@/components/Filter';
 import NoDataDisplay from '@/components/NoDataDisplay';
+import useDownload from '@/components/hooks/useDownload';
 
 interface FileData {
     url: string;
@@ -61,6 +62,7 @@ const MemoizedPagination = React.memo(Pagination);
 
 export default function PromotionPage() {
     const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+    const token = localStorage.getItem('token');
     const [promotionData, setPromotionData] = useState<Promotion[]>([]);
     const [currentPage, setCurrentPage] = useState(1);
     const [error, setError] = useState<string | null>(null);
@@ -84,31 +86,31 @@ export default function PromotionPage() {
             const pageSize = 1000;
             let allPromotions: Promotion[] = [];
             setLoading(true);
-    
+
             try {
                 while (true) {
                     const response = await fetchPromotions(page, pageSize);
-    
+
                     if (response?.data?.length === 0) {
                         break; // Stop fetching if there are no more promotions
                     }
                     allPromotions = [...allPromotions, ...response.data];
                     page += 1; // Move to the next page
                 }
-    
+
                 setPromotionData(allPromotions);
 
                 // Get the most recent updatedAt date for last updated display
                 if (allPromotions.length > 0) {
                     const lastUpdatedDate = allPromotions
-                      .map(promotion => new Date(promotion.attributes.updatedAt))
-                      .reduce((latest, current) =>
-                        current > latest ? current : latest,
-                        new Date(0)
-                      );
-          
+                        .map(promotion => new Date(promotion.attributes.updatedAt))
+                        .reduce((latest, current) =>
+                            current > latest ? current : latest,
+                            new Date(0)
+                        );
+
                     setLastUpdated(lastUpdatedDate.toISOString());
-                  }
+                }
 
             } catch (error: any) {
                 if (error?.response?.status === 401 && error?.response?.data?.message === 'Unauthorized') {
@@ -121,10 +123,10 @@ export default function PromotionPage() {
                 setTimeout(() => setLoading(false), LOADING_TIME_MS);
             }
         };
-    
+
         getPromotions();
     }, []);
-    
+
 
     // Memoized filtered and sorted data
     const filteredData = useMemo(() => {
@@ -175,13 +177,13 @@ export default function PromotionPage() {
 
     const handleSearch = useCallback((searchText: string) => {
         setSearchText(searchText);
-        setCurrentPage(1); 
+        setCurrentPage(1);
     }, []);
 
     const handleFilter = useCallback((orderNo: string, orderDt: string) => {
         setOrderNo(orderNo);
         setOrderDt(orderDt);
-        setCurrentPage(1); 
+        setCurrentPage(1);
     }, []);
 
     const handleReset = useCallback(() => {
@@ -200,7 +202,7 @@ export default function PromotionPage() {
     }, [filteredData]);
 
     // Total number of filtered records
-     const totalRecords = filteredData.length;
+    const totalRecords = filteredData.length;
 
     const handleSorting = useCallback((sortOrder: 'desc' | 'asc') => {
         setSortOrder(sortOrder);
@@ -228,39 +230,8 @@ export default function PromotionPage() {
         }
     }, []);
 
-    const handleDownload = useCallback((fileUrl?: string) => {
-        if (!fileUrl) {
-            console.error('File URL is not defined');
-            setError('File URL is not defined.');
-            return;
-        }
-
-        const fullUrl = `${baseUrl}${fileUrl}`;
-        const newWindow = window.open('', '_blank', 'width=600,height=400');
-
-        if (newWindow) {
-            newWindow.document.write(`
-                <html>
-                    <head>
-                        <title>Downloading...</title>
-                    </head>
-                    <body>
-                        <p>Your download should start automatically. If it does not, <a href="${fullUrl}" download>click here</a>.</p>
-                        <script>
-                            window.onload = function() {
-                                window.location.href = "${fullUrl}";
-                            };
-                        </script>
-                    </body>
-                </html>
-            `);
-
-            newWindow.document.close();
-        } else {
-            console.error('Failed to open new window');
-            setError('Failed to open new window.');
-        }
-    }, [baseUrl]);
+    //Download function hook handler
+    const { handleDownload } = useDownload(baseUrl);
 
     return (
         <Box minH="100vh" bg={bgColor} p={2}>
@@ -383,11 +354,18 @@ export default function PromotionPage() {
                                     {fileUrl && (
                                         <Tooltip label="Download" fontSize="xs">
                                             <IconButton
+                                                onClick={() => {
+                                                    if (token) {
+                                                        handleDownload(fileUrl, token);
+                                                    } else {
+                                                        console.error('User is not authenticated. Token is missing.');
+                                                        setError('User is not authenticated.')
+                                                    }
+                                                }}
                                                 icon={<DownloadIcon />}
-                                                aria-label="Download order"
-                                                onClick={() => handleDownload(fileUrl)}
                                                 variant="outline"
                                                 size="sm"
+                                                aria-label="Download order"
                                             />
                                         </Tooltip>
                                     )}

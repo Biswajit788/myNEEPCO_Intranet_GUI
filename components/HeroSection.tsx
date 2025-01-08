@@ -20,6 +20,7 @@ import { useRouter } from 'next/navigation';
 
 export default function HeroSection() {
   const router = useRouter();
+  const textColor = useColorModeValue("gray.700", "gray.100");
 
   return (
     <Box
@@ -80,7 +81,7 @@ export default function HeroSection() {
                 MyNEEPCO INTRANET
               </Text>
             </Heading>
-            <Text color={'gray.600'} fontSize={'small'}>
+            <Text color={textColor} fontSize={'sm'} textAlign={"justify"}>
               The NEEPCO portal, developed by the IT Department of NEEPCO Ltd, serves as a vital resource for employees,
               providing easy access to online tools and information. Through this portal, employees can conveniently check
               Transfer and Posting orders, Seniority Lists, Promotion orders, and Vigilance reports. Additionally, it keeps
@@ -110,6 +111,7 @@ export default function HeroSection() {
                 fontWeight={'normal'}
                 px={6}
                 leftIcon={<FiLogIn color={'gray.500'} />}
+                _hover={{ bg: 'red.500' }}
               >
                 <Link href="/signin" passHref>
                   Intranet Login

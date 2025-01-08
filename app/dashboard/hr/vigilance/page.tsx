@@ -27,6 +27,7 @@ import LastUpdated from '@/components/LastUpdated';
 import Pagination from '@/components/Pagination';
 import NoDataDisplay from '@/components/NoDataDisplay';
 import Filter from '@/components/Filter';
+import useDownload from '@/components/hooks/useDownload';
 
 interface FileData {
     url: string;
@@ -64,6 +65,7 @@ const MemoizedPagination = React.memo(Pagination);
 export default function VigilancePage() {
 
     const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+    const token = localStorage.getItem('token');
     const [vigilanceData, setVigilanceData] = useState<Vigilance[]>([]);
     const [currentPage, setCurrentPage] = useState(1);
     const [error, setError] = useState<string | null>(null);
@@ -102,14 +104,14 @@ export default function VigilancePage() {
                 // Get the most recent updatedAt date for last updated display
                 if (allVigilances.length > 0) {
                     const lastUpdatedDate = allVigilances
-                      .map(vigilance => new Date(vigilance.attributes.updatedAt))
-                      .reduce((latest, current) =>
-                        current > latest ? current : latest,
-                        new Date(0)
-                      );
-          
+                        .map(vigilance => new Date(vigilance.attributes.updatedAt))
+                        .reduce((latest, current) =>
+                            current > latest ? current : latest,
+                            new Date(0)
+                        );
+
                     setLastUpdated(lastUpdatedDate.toISOString());
-                  }
+                }
 
             } catch (error: any) {
                 if (error?.response?.status === 401 && error?.response?.data?.message === 'Unauthorized') {
@@ -205,39 +207,8 @@ export default function VigilancePage() {
         setCurrentPage(1);
     }, []);
 
-    const handleDownload = useCallback((fileUrl?: string) => {
-        if (!fileUrl) {
-            console.error('File URL is not defined');
-            setError('File URL is not defined.');
-            return;
-        }
-
-        const fullUrl = `${baseUrl}${fileUrl}`;
-        const newWindow = window.open('', '_blank', 'width=600,height=400');
-
-        if (newWindow) {
-            newWindow.document.write(`
-        <html>
-          <head>
-            <title>Downloading...</title>
-          </head>
-          <body>
-            <p>Your download should start automatically. If it does not, <a href="${fullUrl}" download>click here</a>.</p>
-            <script>
-              window.onload = function() {
-                window.location.href = "${fullUrl}";
-              };
-            </script>
-          </body>
-        </html>
-      `);
-
-            newWindow.document.close();
-        } else {
-            console.error('Failed to open new window');
-            setError('Failed to open new window.');
-        }
-    }, [baseUrl]);
+    //Download function hook handler
+    const { handleDownload } = useDownload(baseUrl);
 
     const formatDateTime = useCallback((dateString?: string) => {
         if (!dateString) return 'Invalid date';
@@ -360,31 +331,71 @@ export default function VigilancePage() {
                                             <Heading size="xs" textTransform="uppercase">
                                                 Report
                                             </Heading>
-                                            <Text
-                                                pt="2"
-                                                fontSize="xs"
-                                                fontStyle="italic"
-                                                cursor={fileUrlReport ? 'pointer' : 'not-allowed'}
-                                                onClick={() => fileUrlReport && handleDownload(fileUrlReport)}
-                                                color={fileUrlReport ? 'blue.500' : 'gray.500'}
-                                            >
-                                                {fileUrlReport ? 'Click to download vigilance report' : 'Report not available'}
-                                            </Text>
+                                            {fileUrlReport ? (
+                                                <Text
+                                                    pt="2"
+                                                    fontSize="xs"
+                                                    fontStyle="italic"
+                                                    cursor="pointer"
+                                                    onClick={() => {
+                                                        if (token) {
+                                                            handleDownload(fileUrlReport, token);
+                                                        } else {
+                                                            console.error('User is not authenticated. Token is missing.');
+                                                            alert('User is not Authenticated.')
+                                                            setError('User is not authenticated.')
+                                                        }
+                                                    }}
+                                                    color="blue.500"
+                                                >
+                                                    Click to download Vigilance Report
+                                                </Text>
+                                            ) : (
+                                                <Text
+                                                    pt="2"
+                                                    fontSize="xs"
+                                                    fontStyle="italic"
+                                                    cursor="not-allowed"
+                                                    color="gray.500"
+                                                >
+                                                    Report not available
+                                                </Text>
+                                            )}
                                         </Box>
                                         <Box>
                                             <Heading size="xs" textTransform="uppercase">
                                                 List
                                             </Heading>
-                                            <Text
-                                                pt="2"
-                                                fontSize="xs"
-                                                fontStyle="italic"
-                                                cursor={fileUrlList ? 'pointer' : 'not-allowed'}
-                                                onClick={() => fileUrlList && handleDownload(fileUrlList)}
-                                                color={fileUrlList ? 'blue.500' : 'gray.500'}
-                                            >
-                                                {fileUrlList ? 'Click to download list of senior executive of E5 and above' : 'List not available'}
-                                            </Text>
+                                            {fileUrlList ? (
+                                                <Text
+                                                    pt="2"
+                                                    fontSize="xs"
+                                                    fontStyle="italic"
+                                                    cursor="pointer"
+                                                    onClick={() => {
+                                                        if (token) {
+                                                            handleDownload(fileUrlList, token);
+                                                        } else {
+                                                            console.error('User is not authenticated. Token is missing.');
+                                                            alert('User is not Authenticated.')
+                                                            setError('User is not authenticated.')
+                                                        }
+                                                    }}
+                                                    color="blue.500"
+                                                >
+                                                    Click to download list of senior executive of E5 and above
+                                                </Text>
+                                            ) : (
+                                                <Text
+                                                    pt="2"
+                                                    fontSize="xs"
+                                                    fontStyle="italic"
+                                                    cursor="not-allowed"
+                                                    color="gray.500"
+                                                >
+                                                    List not available
+                                                </Text>
+                                            )}
                                         </Box>
                                     </Stack>
                                 </CardBody>

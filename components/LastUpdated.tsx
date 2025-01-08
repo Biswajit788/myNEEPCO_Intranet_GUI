@@ -7,7 +7,7 @@ interface LastUpdatedProps {
 
 const LastUpdated: React.FC<LastUpdatedProps> = ({ lastUpdated }) => {
   const { colorMode } = useColorMode();
-  const textColor = colorMode === 'dark' ? 'gray.300' : 'gray.700';
+  const textColor = colorMode === 'dark' ? 'gray.300' : '#040562';
 
   // Format date to dd/mm/yyyy
   const formatDate = (dateString: string) => {

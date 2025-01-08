@@ -30,6 +30,7 @@ import NextLink from 'next/link';
 import { fetchUpdates } from '@/services/api';
 import LastUpdated from '@/components/LastUpdated';
 import Pagination from '@/components/Pagination';
+import useDownload from '@/components/hooks/useDownload';
 
 interface UpdateData {
     id: string;
@@ -59,6 +60,8 @@ const UpdatePage = () => {
 
     const itemsPerPage = 10;
     const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+    const token = localStorage.getItem('token');
+
     const bgcolor = useColorModeValue('white', 'gray.900');
     const boxColor = useColorModeValue('gray.700', 'blue.900');
     const textColor = useColorModeValue('white', 'white');
@@ -72,16 +75,16 @@ const UpdatePage = () => {
             setLoading(true);
 
             try {
-                while(true) {
+                while (true) {
                     const response = await fetchUpdates(page, pageSize);
 
-                    if(response?.data?.length === 0) {
+                    if (response?.data?.length === 0) {
                         break;
                     }
                     allUpdates = [...allUpdates, ...response.data];
                     page += 1;
                 }
-               
+
                 setUpdates(allUpdates);
                 setTotalRecords(allUpdates.length);
                 setTotalPages(Math.ceil(allUpdates.length / itemsPerPage));
@@ -121,40 +124,8 @@ const UpdatePage = () => {
         return filtered;
     }, [searchTerm, updates]);
 
-    // Function to handle download
-    const handleDownload = useCallback((fileUrl?: string) => {
-        if (!fileUrl) {
-            console.error('File URL is not defined');
-            setError('File URL is not defined.');
-            return;
-        }
-
-        const fullUrl = `${baseUrl}${fileUrl}`;
-        const newWindow = window.open('', '_blank', 'width=600,height=500');
-
-        if (newWindow) {
-            newWindow.document.write(`
-                <html>
-                    <head>
-                        <title>Downloading...</title>
-                    </head>
-                    <body>
-                        <p>Your download should start automatically. If it does not, <a href="${fullUrl}" download>click here</a>.</p>
-                        <script>
-                            window.onload = function() {
-                                window.location.href = "${fullUrl}";
-                            };
-                        </script>
-                    </body>
-                </html>
-            `);
-
-            newWindow.document.close();
-        } else {
-            console.error('Failed to open new window');
-            setError('Failed to open new window.');
-        }
-    }, [baseUrl]);
+    //Download function hook handler
+    const { handleDownload } = useDownload(baseUrl);
 
     return (
         <Box bg={bgcolor} p={4} rounded="md" shadow="md">
@@ -191,7 +162,7 @@ const UpdatePage = () => {
             </Box>
 
             {/* Display Last Updated Date */}
-            <LastUpdated lastUpdated={lastUpdated}/>
+            <LastUpdated lastUpdated={lastUpdated} />
 
             {loading ? (
                 <Box>
@@ -216,8 +187,8 @@ const UpdatePage = () => {
                         <Tbody>
                             {filteredUpdates
                                 .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
-                                .map((circular, index) => (
-                                    <Tr key={circular.id}>
+                                .map((update, index) => (
+                                    <Tr key={update.id}>
                                         <Td p={4}>{(currentPage - 1) * itemsPerPage + index + 1}</Td>
                                         <Td
                                             p={2}
@@ -227,15 +198,22 @@ const UpdatePage = () => {
                                                 overflowWrap: 'break-word',
                                             }}
                                         >
-                                            {circular.attributes.Title}
+                                            {update.attributes.Title}
                                         </Td>
                                         <Td p={2}>
-                                            {new Date(circular.attributes.Dated).toLocaleDateString()}
+                                            {new Date(update.attributes.Dated).toLocaleDateString()}
                                         </Td>
                                         <Td p={2}>
                                             <Tooltip label="Download" aria-label="Download">
                                                 <IconButton
-                                                    onClick={() => handleDownload(circular.attributes.File?.data?.attributes?.url)}
+                                                    onClick={() => {
+                                                        if (token) {
+                                                            handleDownload(update.attributes.File?.data?.attributes?.url, token);
+                                                        } else {
+                                                            console.error('User is not authenticated. Token is missing.');
+                                                            setError('User is not authenticated.')
+                                                        }
+                                                    }}
                                                     icon={<DownloadIcon />}
                                                     colorScheme="blue"
                                                     size="sm"
