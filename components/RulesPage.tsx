@@ -27,7 +27,7 @@ interface RulesPageProps {
 
 export default function RulesPage({ rules, title, heading, isLoading, error }: RulesPageProps) {
     const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || '';
-    const token = localStorage.getItem('atoken');
+    const token = localStorage.getItem('token');
 
     const boxColor = useColorModeValue('gray.700', 'gray.600');
     const secondaryBoxColor = useColorModeValue('blue.600', 'gray.600');
