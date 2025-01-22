@@ -27,7 +27,7 @@ export default function IsoPage() {
     const [error, setError] = useState<string | null>(null);
 
     const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || '';
-    const token = localStorage.getItem('atoken');
+    const token = localStorage.getItem('token');
     const bgcolor = useColorModeValue('white', 'gray.900');
     const tableHeaderColor = useColorModeValue('gray.700', 'blue.900');
     const textColor = useColorModeValue('white', 'white');
