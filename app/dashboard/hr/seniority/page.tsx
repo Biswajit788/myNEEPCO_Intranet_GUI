@@ -27,6 +27,7 @@ import LastUpdated from '@/components/LastUpdated';
 import Pagination from '@/components/Pagination';
 import NoDataDisplay from '@/components/NoDataDisplay';
 import Filter from '@/components/Filter';
+import useDownload from '@/components/hooks/useDownload';
 
 interface FileData {
     url: string;
@@ -42,6 +43,7 @@ interface SeniorityAttributes {
     OrderNo: string;
     OrderDt: string;
     Description: string;
+    updatedAt: string;
     createdAt: string;
     File?: FileAttributes;
 }
@@ -60,6 +62,7 @@ const MemoizedPagination = React.memo(Pagination);
 export default function SeniorityPage() {
 
     const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+    const token = localStorage.getItem('token');
     const [seniorityData, setSeniorityData] = useState<Seniority[]>([]);
     const [currentPage, setCurrentPage] = useState(1);
     const [error, setError] = useState<string | null>(null);
@@ -100,8 +103,14 @@ export default function SeniorityPage() {
 
                 // Get the most recent createdAt date for last updated display
                 if (allSeniorities.length > 0) {
-                    const lastUpdatedDate = allSeniorities[0]?.attributes?.createdAt;
-                    setLastUpdated(lastUpdatedDate);
+                    const lastUpdatedDate = allSeniorities
+                        .map(seniority => new Date(seniority.attributes.updatedAt))
+                        .reduce((latest, current) =>
+                            current > latest ? current : latest,
+                            new Date(0)
+                        );
+
+                    setLastUpdated(lastUpdatedDate.toISOString());
                 }
 
             } catch (error: any) {
@@ -199,39 +208,8 @@ export default function SeniorityPage() {
         setCurrentPage(1);
     }, []);
 
-    const handleDownload = useCallback((fileUrl?: string) => {
-        if (!fileUrl) {
-            console.error('File URL is not defined');
-            setError('File URL is not defined.');
-            return;
-        }
-
-        const fullUrl = `${baseUrl}${fileUrl}`;
-        const newWindow = window.open('', '_blank', 'width=800,height=600');
-
-        if (newWindow) {
-            newWindow.document.write(`
-        <html>
-          <head>
-            <title>Downloading...</title>
-          </head>
-          <body>
-            <p>Your download should start automatically. If it does not, <a href="${fullUrl}" download>click here</a>.</p>
-            <script>
-              window.onload = function() {
-                window.location.href = "${fullUrl}";
-              };
-            </script>
-          </body>
-        </html>
-      `);
-
-            newWindow.document.close();
-        } else {
-            console.error('Failed to open new window');
-            setError('Failed to open new window.');
-        }
-    }, [baseUrl]);
+    //Download function hook handler
+    const { handleDownload } = useDownload(baseUrl);
 
     const formatDateTime = useCallback((dateString?: string) => {
         if (!dateString) return 'Invalid date';
@@ -372,9 +350,16 @@ export default function SeniorityPage() {
                                     {fileUrl && (
                                         <Tooltip label="Download" fontSize="xs">
                                             <IconButton
+                                                onClick={() => {
+                                                    if (token) {
+                                                        handleDownload(fileUrl, token);
+                                                    } else {
+                                                        console.error('User is not authenticated. Token is missing.');
+                                                        setError('User is not authenticated.')
+                                                    }
+                                                }}
                                                 icon={<DownloadIcon />}
                                                 aria-label="Download order"
-                                                onClick={() => handleDownload(fileUrl)}
                                                 variant="outline"
                                                 size="sm"
                                             />

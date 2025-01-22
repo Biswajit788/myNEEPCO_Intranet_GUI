@@ -1,9 +1,22 @@
 'use client';
 
 import { useState } from 'react';
-import { Box, Button, VStack, HStack, Select, Text, Table, Thead, Tbody, Tr, Th, Td, useToast, useColorModeValue } from '@chakra-ui/react';
+import { 
+  Box, 
+  Button, 
+  VStack, 
+  HStack, 
+  Select, 
+  Text, 
+  Table, 
+  Thead, 
+  Tbody, 
+  Tr, 
+  Th, 
+  Td, useToast, useColorModeValue } from '@chakra-ui/react';
 import { SearchIcon } from '@chakra-ui/icons';
 import { fetchAnnualGenerationReport } from '@/services/api'; // Update your API service
+import useDownload from '@/components/hooks/useDownload';
 
 interface FileData {
   id: number;
@@ -28,6 +41,9 @@ const AnnualGenerationReport = () => {
   const toast = useToast();
   const [year, setYear] = useState<string>(String(getCurrentYear()));
   const [data, setData] = useState<ReportData[] | null>(null);
+
+  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+  const token = localStorage.getItem('token');
 
   const boxColor = useColorModeValue('gray.700', 'blue.900');
   const titleColor = useColorModeValue('gray.200', 'gray.500');
@@ -62,27 +78,8 @@ const AnnualGenerationReport = () => {
     }
   };
 
-  const downloadFile = (fileUrl: string, fileName: string) => {
-    if (!fileUrl) {
-      toast({
-        title: "File not found",
-        description: "No file URL available for download",
-        status: "error",
-        duration: 2000,
-        isClosable: true,
-      });
-      return;
-    }
-    // Construct the full URL by prepending your Strapi backend URL
-    const fullUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}${fileUrl}`;
-
-    const link = document.createElement('a');
-    link.href = fullUrl;
-    link.setAttribute('download', fileName || 'download-file');
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
+  //Download function hook handler
+  const { handleDownload } = useDownload(baseUrl);
 
   return (
     <VStack spacing={{ base: 4, md: 6 }} align="stretch" p={{ base: 3, md: 5 }}>
@@ -155,7 +152,15 @@ const AnnualGenerationReport = () => {
                         <Button
                           colorScheme="blue"
                           size="xs"
-                          onClick={() => downloadFile(item.File?.url || '', item.File?.name || 'unknown-file')}
+                          //onClick={() => downloadFile(item.File?.url || '', item.File?.name || 'unknown-file')}
+                          onClick={() => {
+                            if (token) {
+                              handleDownload(item.File?.url, token);
+                            } else {
+                              console.error('User is not authenticated. Token is missing.');
+                              alert('User is not Authenticated.')
+                            }
+                          }}
                         >
                           Download
                         </Button>

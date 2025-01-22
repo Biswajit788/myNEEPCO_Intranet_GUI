@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Box, Stack, useColorMode, useColorModeValue } from '@chakra-ui/react';
+import { Alert, AlertDescription, AlertIcon, AlertTitle, Box, Stack, useColorMode, useColorModeValue } from '@chakra-ui/react';
 import List from '@/components/BirthdayList';
 import axios from 'axios';
 
@@ -37,7 +37,7 @@ export default function Home() {
                 setPeople(formattedUsers);
             } catch (error) {
                 console.error('Error fetching data', error);
-                setError('Error fetching data');
+                setError('Error fetching Birthday');
             } finally {
                 setLoading(false);
             }
@@ -55,7 +55,13 @@ export default function Home() {
     }
 
     if (error) {
-        return <Box>Error: {error}</Box>;
+        return(
+            <Alert status="error" mb={4}>
+                <AlertIcon />
+                <AlertTitle mr={2}>Error</AlertTitle>
+                <AlertDescription>{error}</AlertDescription>
+            </Alert>
+        );
     }
 
     return (

@@ -28,7 +28,7 @@ export default function Navbar() {
 
   return (
     <>
-      <Box bg={useColorModeValue('blue.100', 'gray.900')} px={4}>
+      <Box bg={useColorModeValue('blue.200', 'gray.900')} px={4}>
         <Flex h={20} alignItems={'center'} justifyContent={'space-between'}>
           {/* Logo on the left on larger screens */}
           <Box display={{ base: 'none', md: 'flex' }}>

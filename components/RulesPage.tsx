@@ -1,7 +1,13 @@
-import { Box, Table, Thead, Tbody, Tr, Th, Td, Text, Flex, Skeleton, useColorModeValue, Tooltip, IconButton, VStack, HStack, Stack } from '@chakra-ui/react';
+import {
+    Box, Table, Thead, Tbody, Tr, Th, Td, Text, Flex, Skeleton, useColorModeValue, Tooltip, IconButton, VStack, HStack, Stack, Alert,
+    AlertIcon,
+    AlertTitle,
+    AlertDescription,
+} from '@chakra-ui/react';
 import { DownloadIcon } from '@chakra-ui/icons';
 import { FaRegHandPointRight } from "react-icons/fa";
 import { useCallback } from 'react';
+import useDownload from './hooks/useDownload';
 
 interface Rule {
     id: number;
@@ -21,6 +27,8 @@ interface RulesPageProps {
 
 export default function RulesPage({ rules, title, heading, isLoading, error }: RulesPageProps) {
     const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+    const token = localStorage.getItem('atoken');
+
     const boxColor = useColorModeValue('gray.700', 'gray.600');
     const secondaryBoxColor = useColorModeValue('blue.600', 'gray.600');
     const titleColor = useColorModeValue('white', 'white');
@@ -28,39 +36,18 @@ export default function RulesPage({ rules, title, heading, isLoading, error }: R
     const textColor = useColorModeValue('black', 'gray.200');
     const tableBg = useColorModeValue('', 'gray.700');
 
-    const handleDownload = useCallback((fileUrl?: string) => {
-        if (!fileUrl) {
-            console.error('File URL is not defined');
-            return;
-        }
+    //Download function hook handler
+    const { handleDownload } = useDownload(baseUrl);
 
-        const fullUrl = `${baseUrl}${fileUrl}`;
-        const newWindow = window.open('', '_blank', 'width=600,height=500');
-
-        if (newWindow) {
-            newWindow.document.write(`
-                <html>
-                    <head>
-                        <title>Downloading...</title>
-                    </head>
-                    <body>
-                        <p>Your download should start automatically. If it does not, <a href="${fullUrl}" download>click here</a>.</p>
-                        <script>
-                            window.onload = function() {
-                                window.location.href = "${fullUrl}";
-                            };
-                        </script>
-                    </body>
-                </html>
-            `);
-
-            newWindow.document.close();
-        } else {
-            console.error('Failed to open new window');
-        }
-    }, [baseUrl]);
-
-    if (error) return <Text color="red.500">{error}</Text>;
+    if (error) {
+        return (
+            <Alert status="error" mb={4}>
+                <AlertIcon />
+                <AlertTitle mr={2}>Error</AlertTitle>
+                <AlertDescription>{error}</AlertDescription>
+            </Alert>
+        );
+    }
 
     return (
         <>
@@ -110,8 +97,15 @@ export default function RulesPage({ rules, title, heading, isLoading, error }: R
                                                         icon={<DownloadIcon />}
                                                         aria-label="View"
                                                         size="sm"
-                                                        onClick={() => handleDownload(rule.fileUrl)}
                                                         colorScheme="blue"
+                                                        onClick={() => {
+                                                            if (token) {
+                                                                handleDownload(rule.fileUrl, token);
+                                                            } else {
+                                                                console.error('User is not authenticated. Token is missing.');
+                                                                alert('User is not authenticated.')
+                                                            }
+                                                        }}
                                                     />
                                                 </Tooltip>
                                             </HStack>
@@ -147,8 +141,15 @@ export default function RulesPage({ rules, title, heading, isLoading, error }: R
                                                             icon={<DownloadIcon />}
                                                             aria-label="View"
                                                             size="sm"
-                                                            onClick={() => handleDownload(rule.fileUrl)}
                                                             colorScheme="blue"
+                                                            onClick={() => {
+                                                                if (token) {
+                                                                    handleDownload(rule.fileUrl, token);
+                                                                } else {
+                                                                    console.error('User is not authenticated. Token is missing.');
+                                                                    alert('User is not authenticated.')
+                                                                }
+                                                            }}
                                                         />
                                                     </Tooltip>
                                                 </Td>
@@ -201,7 +202,14 @@ export default function RulesPage({ rules, title, heading, isLoading, error }: R
                                                         <li key={`file-${index}`}>
                                                             <a
                                                                 href='javascript:void(0);'
-                                                                onClick={() => handleDownload(fileUrl)}
+                                                                onClick={() => {
+                                                                    if (token) {
+                                                                        handleDownload(fileUrl, token);
+                                                                    } else {
+                                                                        console.error('User is not authenticated. Token is missing.');
+                                                                        alert('User is not authenticated.')
+                                                                    }
+                                                                }}
                                                                 download
                                                                 style={{
                                                                     color: 'blue',

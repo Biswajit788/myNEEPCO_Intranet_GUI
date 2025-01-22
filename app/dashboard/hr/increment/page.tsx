@@ -26,6 +26,7 @@ import LastUpdated from '@/components/LastUpdated';
 import Pagination from '@/components/Pagination';
 import NoDataDisplay from '@/components/NoDataDisplay';
 import Filter from '@/components/Filter';
+import useDownload from '@/components/hooks/useDownload';
 
 interface FileData {
     url: string;
@@ -42,6 +43,7 @@ interface IncrementAttributes {
     OrderDt: string;
     Description: string;
     Grade: string;
+    updatedAt: string;
     createdAt: string;
     File?: FileAttributes;
 }
@@ -59,6 +61,7 @@ const MemoizedPagination = React.memo(Pagination);
 
 export default function IncrementPage() {
     const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+    const token = localStorage.getItem('token');
     const [incrementData, setIncrementData] = useState<Increment[]>([]);
     const [currentPage, setCurrentPage] = useState(1);
     const [error, setError] = useState<string | null>(null);
@@ -95,10 +98,16 @@ export default function IncrementPage() {
 
                 setIncrementData(allIncrements);
 
-                // Get the most recent createdAt date for last updated display
+                // Get the most recent updatedAt date for last updated display
                 if (allIncrements.length > 0) {
-                    const lastUpdatedDate = allIncrements[0]?.attributes?.createdAt;
-                    setLastUpdated(lastUpdatedDate);
+                    const lastUpdatedDate = allIncrements
+                        .map(increment => new Date(increment.attributes.updatedAt))
+                        .reduce((latest, current) =>
+                            current > latest ? current : latest,
+                            new Date(0)
+                        );
+
+                    setLastUpdated(lastUpdatedDate.toISOString());
                 }
 
             } catch (error: any) {
@@ -137,39 +146,8 @@ export default function IncrementPage() {
         }
     }, []);
 
-    const handleDownload = useCallback((fileUrl?: string) => {
-        if (!fileUrl) {
-            console.error('File URL is not defined');
-            setError('File URL is not defined.');
-            return;
-        }
-
-        const fullUrl = `${baseUrl}${fileUrl}`;
-        const newWindow = window.open('', '_blank', 'width=600,height=400');
-
-        if (newWindow) {
-            newWindow.document.write(`
-        <html>
-          <head>
-            <title>Downloading...</title>
-          </head>
-          <body>
-            <p>Your download should start automatically. If it does not, <a href="${fullUrl}" download>click here</a>.</p>
-            <script>
-              window.onload = function() {
-                window.location.href = "${fullUrl}";
-              };
-            </script>
-          </body>
-        </html>
-      `);
-
-            newWindow.document.close();
-        } else {
-            console.error('Failed to open new window');
-            setError('Failed to open new window.');
-        }
-    }, [baseUrl]);
+    //Download function hook handler
+    const { handleDownload } = useDownload(baseUrl);
 
     // Memoize filtered and sorted data
     const filteredData = useMemo(() => {
@@ -336,11 +314,18 @@ export default function IncrementPage() {
                                     {fileUrl && (
                                         <Tooltip label="Download" fontSize="xs">
                                             <IconButton
+                                                onClick={() => {
+                                                    if (token) {
+                                                        handleDownload(fileUrl, token);
+                                                    } else {
+                                                        console.error('User is not authenticated. Token is missing.');
+                                                        setError('User is not authenticated.')
+                                                    }
+                                                }}
                                                 icon={<DownloadIcon />}
-                                                aria-label="Download order"
-                                                onClick={() => handleDownload(fileUrl)}
                                                 variant="outline"
                                                 size="sm"
+                                                aria-label="Download order"
                                             />
                                         </Tooltip>
                                     )}

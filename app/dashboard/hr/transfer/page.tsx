@@ -26,6 +26,7 @@ import LastUpdated from '@/components/LastUpdated';
 import Pagination from '@/components/Pagination';
 import Filter from '@/components/Filter';
 import NoDataDisplay from '@/components/NoDataDisplay';
+import useDownload from '@/components/hooks/useDownload';
 
 interface FileData {
     url: string;
@@ -41,6 +42,7 @@ interface TransferAttributes {
     OrderNo: string;
     OrderDt: string;
     Description: string;
+    updatedAt: string;
     createdAt: string;
     File?: FileAttributes;
 }
@@ -58,6 +60,7 @@ const MemoizedPagination = React.memo(Pagination);
 export default function PromotionPage() {
 
     const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+    const token = localStorage.getItem('token');
     const [transferData, setTransferData] = useState<Transfer[]>([]);
     const [currentPage, setCurrentPage] = useState(1);
     const [error, setError] = useState<string | null>(null);
@@ -94,10 +97,16 @@ export default function PromotionPage() {
 
                 setTransferData(allTransfers);
 
-                // Get the most recent createdAt date for last updated display
+                // Get the most recent updatedAt date for last updated display
                 if (allTransfers.length > 0) {
-                    const lastUpdatedDate = allTransfers[0]?.attributes?.createdAt;
-                    setLastUpdated(lastUpdatedDate);
+                    const lastUpdatedDate = allTransfers
+                        .map(transfer => new Date(transfer.attributes.updatedAt))
+                        .reduce((latest, current) =>
+                            current > latest ? current : latest,
+                            new Date(0)
+                        );
+
+                    setLastUpdated(lastUpdatedDate.toISOString());
                 }
 
             } catch (error: any) {
@@ -195,39 +204,8 @@ export default function PromotionPage() {
         setCurrentPage(1);
     }, []);
 
-    const handleDownload = useCallback((fileUrl?: string) => {
-        if (!fileUrl) {
-            console.error('File URL is not defined');
-            setError('File URL is not defined.');
-            return;
-        }
-
-        const fullUrl = `${baseUrl}${fileUrl}`;
-        const newWindow = window.open('', '_blank', 'width=600,height=400');
-
-        if (newWindow) {
-            newWindow.document.write(`
-                <html>
-                    <head>
-                        <title>Downloading...</title>
-                    </head>
-                    <body>
-                        <p>Your download should start automatically. If it does not, <a href="${fullUrl}" download>click here</a>.</p>
-                        <script>
-                            window.onload = function() {
-                                window.location.href = "${fullUrl}";
-                            };
-                        </script>
-                    </body>
-                </html>
-            `);
-
-            newWindow.document.close();
-        } else {
-            console.error('Failed to open new window');
-            setError('Failed to open new window.');
-        }
-    }, [baseUrl]);
+    //Download function hook handler
+    const { handleDownload } = useDownload(baseUrl);
 
     const formatDateTime = useCallback((dateString?: string) => {
         if (!dateString) return 'Invalid date';
@@ -366,9 +344,16 @@ export default function PromotionPage() {
                                     {fileUrl && (
                                         <Tooltip label="Download" fontSize="xs">
                                             <IconButton
+                                                onClick={() => {
+                                                    if (token) {
+                                                        handleDownload(fileUrl, token);
+                                                    } else {
+                                                        console.error('User is not authenticated. Token is missing.');
+                                                        setError('User is not authenticated.')
+                                                    }
+                                                }}
                                                 icon={<DownloadIcon />}
                                                 aria-label="Download order"
-                                                onClick={() => handleDownload(fileUrl)}
                                                 variant="outline"
                                                 size="sm"
                                             />

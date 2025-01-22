@@ -19,6 +19,7 @@ import {
 } from '@chakra-ui/react';
 import { SearchIcon } from '@chakra-ui/icons';
 import { fetchQuarterlyGenerationReport } from '@/services/api'; // Update your API service
+import useDownload from '@/components/hooks/useDownload';
 
 interface FileData {
   id: number;
@@ -49,6 +50,8 @@ const QUARTERS = ['Jan-Mar', 'Apr-Jun', 'Jul-Sep', 'Oct-Dec'];
 const QuarterlyGenerationReport = () => {
   const toast = useToast();
   const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+  const token = localStorage.getItem('token');
+
   const [quarter, setQuarter] = useState<string>(getCurrentQuarter());
   const [year, setYear] = useState<string>(String(getCurrentYear()));
   const [data, setData] = useState<ReportData[] | null>(null);
@@ -86,24 +89,8 @@ const QuarterlyGenerationReport = () => {
     }
   };
 
-  const downloadFile = async (fileUrl: string, fileName: string) => {
-    const fullUrl = `${baseUrl}${fileUrl}`;
-
-    try {
-      const response = await fetch(fullUrl);
-      const blob = await response.blob();
-      const blobUrl = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = blobUrl;
-      link.setAttribute('download', fileName);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(blobUrl);
-    } catch (error) {
-      console.error('Failed to download file:', error);
-    }
-  };
+  //Download function hook handler
+  const { handleDownload } = useDownload(baseUrl);
 
   return (
     <VStack spacing={{ base: 4, md: 6 }} align="stretch" p={{ base: 3, md: 5 }}>
@@ -202,7 +189,14 @@ const QuarterlyGenerationReport = () => {
                         <Button
                           colorScheme="blue"
                           size="xs"
-                          onClick={() => downloadFile(item.File?.url || '', item.File?.name || 'unknown-file')}
+                          onClick={() => {
+                            if (token) {
+                              handleDownload(item.File?.url, token);
+                            } else {
+                              console.error('User is not authenticated. Token is missing.');
+                              alert('User is not Authenticated.')
+                            }
+                          }}
                         >
                           Download
                         </Button>
